@@ -9,7 +9,8 @@ import CallToAction from './components/CallToAction';
 import Footer from './components/Footer';
 import SignUpPage from './pages/SignUpPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
-
+import DoctorDashboard from './dashboard/doctor/DoctorDashboard';
+import PatientDashboard from './dashboard/patient/PatientDashboard';
 
 function App() {
   return (
@@ -19,6 +20,8 @@ function App() {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         
+        <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+        <Route path="/patient/dashboard" element={<PatientDashboard />} />
         
         <Route path="/" element={
           <main>
