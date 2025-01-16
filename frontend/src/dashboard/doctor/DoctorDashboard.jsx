@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Calendar, Activity, DollarSign, Clock, Search } from 'lucide-react';
+import { Users, Calendar, Activity, DollarSign, Clock, Search, FileText } from 'lucide-react';
 import Sidebar from '../layout/Sidebar';
 import DashboardHeader from '../layout/DashboardHeader';
 import PatientQueue from './PatientQueue';
@@ -51,6 +51,10 @@ const DoctorDashboard = () => {
                 </div>
                 <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
                   Add Patient
+                </button>
+                <button className="flex items-center bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-200">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Medical Records
                 </button>
               </div>
             </div>

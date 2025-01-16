@@ -17,6 +17,7 @@ export default function Sidebar({ userType }) {
     { name: 'Dashboard', icon: Home, current: true },
     { name: 'Appointments', icon: Calendar, current: false },
     { name: 'Patients', icon: Users, current: false },
+    { name: 'Medical Records', icon: FileText, current: false },
     { name: 'Analytics', icon: BarChart2, current: false },
     { name: 'AI Insights', icon: Heart, current: false },
     { name: 'Settings', icon: Settings, current: false },
