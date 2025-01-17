@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Calendar, 
@@ -13,23 +14,25 @@ import {
 } from 'lucide-react';
 
 export default function Sidebar({ userType }) {
+  const location = useLocation();
+
   const doctorNavigation = [
-    { name: 'Dashboard', icon: Home, current: true },
-    { name: 'Appointments', icon: Calendar, current: false },
-    { name: 'Patients', icon: Users, current: false },
-    { name: 'Analytics', icon: BarChart2, current: false },
-    { name: 'AI Insights', icon: Heart, current: false },
-    { name: 'Settings', icon: Settings, current: false },
+    { name: 'Dashboard', icon: Home, path: '/doctor/dashboard' },
+    { name: 'Appointments', icon: Calendar, path: '/doctor/appointments' },
+    { name: 'Patients', icon: Users, path: '/doctor/patients' },
+    { name: 'Analytics', icon: BarChart2, path: '/doctor/analytics' },
+    { name: 'AI Insights', icon: Heart, path: '/doctor/insights' },
+    { name: 'Settings', icon: Settings, path: '/doctor/settings' },
   ];
 
   const patientNavigation = [
-    { name: 'Dashboard', icon: Home, current: true },
-    { name: 'Appointments', icon: Calendar, current: false },
-    { name: 'Medical Records', icon: FileText, current: false },
-    { name: 'Messages', icon: MessageSquare, current: false },
-    { name: 'Lab Results', icon: TestTube2, current: false },
-    { name: 'Prescriptions', icon: Pill, current: false },
-    { name: 'Settings', icon: Settings, current: false },
+    { name: 'Dashboard', icon: Home, path: '/patient/dashboard' },
+    { name: 'Appointments', icon: Calendar, path: '/patient/appointments' },
+    { name: 'Medical Records', icon: FileText, path: '/patient/records' },
+    { name: 'Messages', icon: MessageSquare, path: '/patient/messages' },
+    { name: 'Lab Results', icon: TestTube2, path: '/patient/lab-results' },
+    { name: 'Prescriptions', icon: Pill, path: '/patient/prescriptions' },
+    { name: 'Settings', icon: Settings, path: '/patient/settings' },
   ];
 
   const navigation = userType === 'doctor' ? doctorNavigation : patientNavigation;
@@ -40,12 +43,12 @@ export default function Sidebar({ userType }) {
         <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
           <nav className="mt-5 flex-1 px-2 space-y-1">
             {navigation.map((item) => (
-              <a
+              <Link
                 key={item.name}
-                href="#"
+                to={item.path}
                 className={`
                   group flex items-center px-2 py-2 text-sm font-medium rounded-md
-                  ${item.current
+                  ${location.pathname === item.path
                     ? 'bg-indigo-800 text-white'
                     : 'text-indigo-100 hover:bg-indigo-800'}
                 `}
@@ -53,11 +56,11 @@ export default function Sidebar({ userType }) {
                 <item.icon
                   className={`
                     mr-3 flex-shrink-0 h-6 w-6
-                    ${item.current ? 'text-white' : 'text-indigo-300'}
+                    ${location.pathname === item.path ? 'text-white' : 'text-indigo-300'}
                   `}
                 />
                 {item.name}
-              </a>
+              </Link>
             ))}
           </nav>
         </div>
