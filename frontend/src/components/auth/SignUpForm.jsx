@@ -5,7 +5,9 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
 import { emailSchema, passwordSchema, nameSchema, userTypeSchema } from '../../utils/validation';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const signUpSchema = z.object({
   fullName: nameSchema,
@@ -23,6 +25,7 @@ const SignUpForm = () => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,6 +41,25 @@ const SignUpForm = () => {
       await signUpSchema.parseAsync(formData);
       // Add your signup logic here
       console.log('Form data:', formData);
+
+      const isSuccess = true // This should be replace with an actual API response logic
+
+      if (isSuccess) {
+        toast.success('Account created successfully!');
+
+        // Redirect to patient's dashboard if usertype is 'patient'
+      
+        if (formData.userType === 'patient'){
+           setTimeout(() => {
+            navigate('/dashboard/patient');
+           }, 2000);
+        } else {
+          toast.error('Invalid user type selected');
+        }
+
+      } else {
+        toast.error('Failed to create an account. Please try again.');
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors = {};
@@ -53,6 +75,7 @@ const SignUpForm = () => {
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-6">
       <Input
         label="Full Name"
@@ -123,6 +146,8 @@ const SignUpForm = () => {
         </Link>
       </div>
     </form>
+     <ToastContainer position="top-right" autoClose={3000} />
+     </>
   );
 };
 
