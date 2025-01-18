@@ -12,6 +12,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DoctorDashboard from './dashboard/doctor/DoctorDashboard';
 import PatientDashboard from './dashboard/patient/PatientDashboard';
 import NetworkDashboard from './dashboard/network/NetworkDashboard';
+import AppointmentsPage from './dashboard/appointments/AppointmentsPage';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         
         <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+        <Route path="/doctor/appointments" element={<AppointmentsPage />} />
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
         <Route path="/network/dashboard" element={<NetworkDashboard />} />
         
