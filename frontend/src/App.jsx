@@ -11,6 +11,7 @@ import SignUpPage from './pages/SignUpPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DoctorDashboard from './dashboard/doctor/DoctorDashboard';
 import PatientDashboard from './dashboard/patient/PatientDashboard';
+import NetworkDashboard from './dashboard/network/NetworkDashboard';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         
         <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
+        <Route path="/network/dashboard" element={<NetworkDashboard />} />
         
         <Route path="/" element={
           <main>
