@@ -9,7 +9,11 @@ import {
   FileText, 
   MessageSquare, 
   TestTube2,
-  Pill
+  Pill,
+  Network,
+  Server,
+  Activity,
+  Wrench
 } from 'lucide-react';
 
 export default function Sidebar({ userType }) {
@@ -33,7 +37,20 @@ export default function Sidebar({ userType }) {
     { name: 'Settings', icon: Settings, current: false },
   ];
 
-  const navigation = userType === 'doctor' ? doctorNavigation : patientNavigation;
+  const adminNavigation = [
+    { name: 'Dashboard', icon: Home, current: true },
+    { name: 'Network Status', icon: Network, current: false },
+    { name: 'Facilities', icon: Server, current: false },
+    { name: 'Maintenance', icon: Wrench, current: false },
+    { name: 'Analytics', icon: BarChart2, current: false },
+    { name: 'Alerts', icon: Activity, current: false },
+    { name: 'Settings', icon: Settings, current: false },
+  ];
+
+  const navigation = 
+    userType === 'doctor' ? doctorNavigation : 
+    userType === 'admin' ? adminNavigation :
+    patientNavigation;
 
   return (
     <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
