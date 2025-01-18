@@ -33,20 +33,48 @@ export default function PatientStats() {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
+        padding: 8,
       },
       title: {
         display: true,
         text: 'Weekly Patient Statistics',
+        padding: {
+          top: 8,
+          bottom: 16
+        },
+        font: {
+          size: 16,
+          weight: 'bold'
+        }
       },
     },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 5
+        }
+      }
+    },
+    layout: {
+      padding: {
+        left: 8,
+        right: 8,
+        top: 0,
+        bottom: 8
+      }
+    }
   };
 
   return (
-    <div className="w-full h-[400px]">
-      <Bar options={options} data={data} />
+    <div className="w-full h-full flex items-center justify-center p-3">
+      <div className="w-full h-[280px]">
+        <Bar options={options} data={data} />
+      </div>
     </div>
   );
 } 

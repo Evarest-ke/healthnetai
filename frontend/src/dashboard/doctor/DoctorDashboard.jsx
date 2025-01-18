@@ -283,11 +283,11 @@ const DoctorDashboard = () => {
                   </div>
                 </div>
 
-                {/* Patient Statistics */}
-                <div className="bg-white rounded-lg shadow">
+                {/* Patient Statistics Card */}
+                <div className="bg-white rounded-lg shadow overflow-hidden">
                   <div className="p-4">
                     <h2 className="text-lg font-semibold mb-4">Patient Statistics</h2>
-                    <div className="h-[300px]">
+                    <div className="h-[320px]"> {/* Increased height from 300px to 320px */}
                       <PatientStats />
                     </div>
                   </div>
