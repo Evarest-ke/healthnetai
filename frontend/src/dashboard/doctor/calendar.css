@@ -1,0 +1,56 @@
+.appointment-calendar {
+  height: 100%;
+  width: 100%;
+  font-family: inherit;
+}
+
+.fc {
+  height: 100% !important;
+  background: white;
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+  margin: 1rem;
+  padding: 0 1rem;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.2rem;
+}
+
+.fc .fc-button {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.875rem;
+  background-color: #4F46E5;
+  border-color: #4F46E5;
+}
+
+.fc .fc-button:hover {
+  background-color: #4338CA;
+  border-color: #4338CA;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: #3730A3;
+  border-color: #3730A3;
+}
+
+.fc-event {
+  padding: 2px 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.fc-timegrid-slot {
+  height: 2.5rem !important;
+}
+
+.fc-theme-standard td, 
+.fc-theme-standard th {
+  border-color: #E5E7EB;
+}
+
+.fc-day-today {
+  background-color: #EEF2FF !important;
+} 
