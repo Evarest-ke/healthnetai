@@ -42,7 +42,7 @@ export default function Sidebar({ userType }) {
 
   const adminNavigation = [
     { name: 'Dashboard', icon: Home, href: '/network/dashboard' },
-    { name: 'Network Status', icon: Network, href: '/network/status' },
+    { name: 'Network Status', icon: Activity, href: '/network/status' },
     { name: 'Facilities', icon: Server, href: '/network/facilities' },
     { name: 'Maintenance', icon: Wrench, href: '/network/maintenance' },
     { name: 'Analytics', icon: BarChart2, href: '/network/analytics' },
