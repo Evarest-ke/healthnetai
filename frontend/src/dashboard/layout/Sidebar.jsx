@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Calendar, 
@@ -17,34 +18,36 @@ import {
 } from 'lucide-react';
 
 export default function Sidebar({ userType }) {
+  const location = useLocation();
+
   const doctorNavigation = [
-    { name: 'Dashboard', icon: Home, current: true },
-    { name: 'Appointments', icon: Calendar, current: false },
-    { name: 'Patients', icon: Users, current: false },
-    { name: 'Medical Records', icon: FileText, current: false },
-    { name: 'Analytics', icon: BarChart2, current: false },
-    { name: 'AI Insights', icon: Heart, current: false },
-    { name: 'Settings', icon: Settings, current: false },
+    { name: 'Dashboard', icon: Home, href: '/doctor/dashboard' },
+    { name: 'Appointments', icon: Calendar, href: '/doctor/appointments' },
+    { name: 'Patients', icon: Users, href: '/doctor/patients' },
+    { name: 'Medical Records', icon: FileText, href: '/doctor/records' },
+    { name: 'Analytics', icon: BarChart2, href: '/doctor/analytics' },
+    { name: 'AI Insights', icon: Heart, href: '/doctor/ai-insights' },
+    { name: 'Settings', icon: Settings, href: '/doctor/settings' },
   ];
 
   const patientNavigation = [
-    { name: 'Dashboard', icon: Home, current: true },
-    { name: 'Appointments', icon: Calendar, current: false },
-    { name: 'Medical Records', icon: FileText, current: false },
-    { name: 'Messages', icon: MessageSquare, current: false },
-    { name: 'Lab Results', icon: TestTube2, current: false },
-    { name: 'Prescriptions', icon: Pill, current: false },
-    { name: 'Settings', icon: Settings, current: false },
+    { name: 'Dashboard', icon: Home, href: '/patient/dashboard' },
+    { name: 'Appointments', icon: Calendar, href: '/patient/appointments' },
+    { name: 'Medical Records', icon: FileText, href: '/patient/records' },
+    { name: 'Messages', icon: MessageSquare, href: '/patient/messages' },
+    { name: 'Lab Results', icon: TestTube2, href: '/patient/lab-results' },
+    { name: 'Prescriptions', icon: Pill, href: '/patient/prescriptions' },
+    { name: 'Settings', icon: Settings, href: '/patient/settings' },
   ];
 
   const adminNavigation = [
-    { name: 'Dashboard', icon: Home, current: true },
-    { name: 'Network Status', icon: Network, current: false },
-    { name: 'Facilities', icon: Server, current: false },
-    { name: 'Maintenance', icon: Wrench, current: false },
-    { name: 'Analytics', icon: BarChart2, current: false },
-    { name: 'Alerts', icon: Activity, current: false },
-    { name: 'Settings', icon: Settings, current: false },
+    { name: 'Dashboard', icon: Home, href: '/network/dashboard' },
+    { name: 'Network Status', icon: Network, href: '/network/status' },
+    { name: 'Facilities', icon: Server, href: '/network/facilities' },
+    { name: 'Maintenance', icon: Wrench, href: '/network/maintenance' },
+    { name: 'Analytics', icon: BarChart2, href: '/network/analytics' },
+    { name: 'Alerts', icon: Activity, href: '/network/alerts' },
+    { name: 'Settings', icon: Settings, href: '/network/settings' },
   ];
 
   const navigation = 
@@ -58,12 +61,12 @@ export default function Sidebar({ userType }) {
         <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
           <nav className="mt-5 flex-1 px-2 space-y-1">
             {navigation.map((item) => (
-              <a
+              <Link
                 key={item.name}
-                href="#"
+                to={item.href}
                 className={`
                   group flex items-center px-2 py-2 text-sm font-medium rounded-md
-                  ${item.current
+                  ${location.pathname === item.href
                     ? 'bg-indigo-800 text-white'
                     : 'text-indigo-100 hover:bg-indigo-800'}
                 `}
@@ -71,11 +74,11 @@ export default function Sidebar({ userType }) {
                 <item.icon
                   className={`
                     mr-3 flex-shrink-0 h-6 w-6
-                    ${item.current ? 'text-white' : 'text-indigo-300'}
+                    ${location.pathname === item.href ? 'text-white' : 'text-indigo-300'}
                   `}
                 />
                 {item.name}
-              </a>
+              </Link>
             ))}
           </nav>
         </div>
