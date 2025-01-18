@@ -14,7 +14,8 @@ import {
   Network,
   Server,
   Activity,
-  Wrench
+  Wrench,
+  Building2
 } from 'lucide-react';
 
 export default function Sidebar({ userType }) {
@@ -43,7 +44,7 @@ export default function Sidebar({ userType }) {
   const adminNavigation = [
     { name: 'Dashboard', icon: Home, href: '/network/dashboard' },
     { name: 'Network Status', icon: Activity, href: '/network/status' },
-    { name: 'Facilities', icon: Server, href: '/network/facilities' },
+    { name: 'Facilities', icon: Building2, href: '/network/facilities' },
     { name: 'Maintenance', icon: Wrench, href: '/network/maintenance' },
     { name: 'Analytics', icon: BarChart2, href: '/network/analytics' },
     { name: 'Alerts', icon: Activity, href: '/network/alerts' },
