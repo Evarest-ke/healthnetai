@@ -21,6 +21,7 @@ import NetworkAnalytics from './dashboard/network/pages/NetworkAnalytics';
 import NetworkAlerts from './dashboard/network/pages/NetworkAlerts';
 import NetworkSettings from './dashboard/network/pages/NetworkSettings';
 import MedicalRecordsPage from './dashboard/doctor/records/MedicalRecordsPage';
+import AnalyticsPage from './dashboard/doctor/analytics/AnalyticsPage';
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
         <Route path="/network/alerts" element={<NetworkAlerts />} />
         <Route path="/network/settings" element={<NetworkSettings />} />
         <Route path="/doctor/records" element={<MedicalRecordsPage />} />
+        <Route path="/doctor/analytics" element={<AnalyticsPage />} />
 
         <Route path="/" element={
           <main>
