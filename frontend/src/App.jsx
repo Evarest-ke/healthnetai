@@ -16,6 +16,7 @@ import NetworkStatus from './dashboard/network/pages/NetworkStatus';
 import AppointmentsPage from './dashboard/appointments/AppointmentsPage';
 import Facilities from './dashboard/network/pages/Facilities';
 import MaintenancePage from './dashboard/network/pages/MaintenancePage';
+import NetworkAnalytics from './dashboard/network/pages/NetworkAnalytics';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path="/network/status" element={<NetworkStatus />} />
         <Route path="/network/facilities" element={<Facilities />} />
         <Route path="/network/maintenance" element={<MaintenancePage />} />
+        <Route path="/network/analytics" element={<NetworkAnalytics />} />
         
         <Route path="/" element={
           <main>
