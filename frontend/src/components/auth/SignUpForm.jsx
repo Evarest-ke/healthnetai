@@ -101,6 +101,7 @@ const SignUpForm = () => {
           { value: '', label: 'Select user type' },
           { value: 'patient', label: 'Patient' },
           { value: 'provider', label: 'Healthcare Provider' },
+          { value: 'admin', label: 'Administrator' },
         ]}
       />
 
