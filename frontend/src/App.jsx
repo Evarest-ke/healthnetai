@@ -17,13 +17,14 @@ import AppointmentsPage from './dashboard/appointments/AppointmentsPage';
 import Facilities from './dashboard/network/pages/Facilities';
 import MaintenancePage from './dashboard/network/pages/MaintenancePage';
 import NetworkAnalytics from './dashboard/network/pages/NetworkAnalytics';
+import NetworkAlerts from './dashboard/network/pages/NetworkAlerts';
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/signup" element={<SignUpPage />} /> 
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         
         <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
@@ -34,6 +35,7 @@ function App() {
         <Route path="/network/facilities" element={<Facilities />} />
         <Route path="/network/maintenance" element={<MaintenancePage />} />
         <Route path="/network/analytics" element={<NetworkAnalytics />} />
+        <Route path="/network/alerts" element={<NetworkAlerts />} />
         
         <Route path="/" element={
           <main>
