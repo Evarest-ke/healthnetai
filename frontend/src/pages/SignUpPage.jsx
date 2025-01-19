@@ -7,7 +7,7 @@ const SignUpPage = () => {
     <div className="min-h-screen bg-white font-poppins">
       <AuthLayout
         title="Create an Account"
-        subtitle="Join the NCD Management Platform"
+        subtitle="Join the HealthNet Management Platform"
       >
         <SignUpForm />
       </AuthLayout>

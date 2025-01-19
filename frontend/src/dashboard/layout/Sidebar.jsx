@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
   Calendar, 
@@ -15,11 +15,19 @@ import {
   Server,
   Activity,
   Wrench,
-  Building2
+  Building2,
+  LogOut
 } from 'lucide-react';
 
 export default function Sidebar({ userType }) {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Add any logout logic here (clear tokens, session, etc.)
+    localStorage.removeItem('authToken'); // Clear auth token
+    navigate('/'); // Redirect to homepage
+  };
 
   const doctorNavigation = [
     { name: 'Dashboard', icon: Home, href: '/doctor/dashboard' },
@@ -59,6 +67,19 @@ export default function Sidebar({ userType }) {
   return (
     <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
       <div className="flex-1 flex flex-col min-h-0 bg-gradient-to-b from-indigo-700 to-indigo-900">
+        {/* <div className="flex items-center h-16 flex-shrink-0 px-4">
+          <img
+            className="h-8 w-auto"
+            src="/logo.svg"
+            alt="HealthNet"
+          />
+        </div> */}
+
+        <Link to="/" className="flex items-center px-4 py-2">
+            <Heart className="w-6 h-6 text-blue-600" />
+            <span className="ml-2 text-xl font-bold text-white">HealthNetAi</span>
+          </Link>
+        
         <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
           <nav className="mt-5 flex-1 px-2 space-y-1">
             {navigation.map((item) => (
@@ -82,6 +103,17 @@ export default function Sidebar({ userType }) {
               </Link>
             ))}
           </nav>
+          
+          {/* Logout Button */}
+          <div className="px-2 mt-auto pb-4">
+            <button
+              onClick={handleLogout}
+              className="w-full group flex items-center px-2 py-2 text-sm font-medium rounded-md text-red-200 hover:bg-red-800 hover:text-white transition-colors duration-150"
+            >
+              <LogOut className="mr-3 flex-shrink-0 h-6 w-6 text-red-300 group-hover:text-red-100" />
+              Sign Out
+            </button>
+          </div>
         </div>
       </div>
     </div>
