@@ -18,6 +18,7 @@ import Facilities from './dashboard/network/pages/Facilities';
 import MaintenancePage from './dashboard/network/pages/MaintenancePage';
 import NetworkAnalytics from './dashboard/network/pages/NetworkAnalytics';
 import NetworkAlerts from './dashboard/network/pages/NetworkAlerts';
+import NetworkSettings from './dashboard/network/pages/NetworkSettings';
 
 function App() {
   return (
@@ -36,7 +37,8 @@ function App() {
         <Route path="/network/maintenance" element={<MaintenancePage />} />
         <Route path="/network/analytics" element={<NetworkAnalytics />} />
         <Route path="/network/alerts" element={<NetworkAlerts />} />
-        
+        <Route path="/network/settings" element={<NetworkSettings />} />
+
         <Route path="/" element={
           <main>
             <Header />
