@@ -20,6 +20,7 @@ import MaintenancePage from './dashboard/network/pages/MaintenancePage';
 import NetworkAnalytics from './dashboard/network/pages/NetworkAnalytics';
 import NetworkAlerts from './dashboard/network/pages/NetworkAlerts';
 import NetworkSettings from './dashboard/network/pages/NetworkSettings';
+import MedicalRecordsPage from './dashboard/doctor/records/MedicalRecordsPage';
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
         <Route path="/network/analytics" element={<NetworkAnalytics />} />
         <Route path="/network/alerts" element={<NetworkAlerts />} />
         <Route path="/network/settings" element={<NetworkSettings />} />
+        <Route path="/doctor/records" element={<MedicalRecordsPage />} />
 
         <Route path="/" element={
           <main>
