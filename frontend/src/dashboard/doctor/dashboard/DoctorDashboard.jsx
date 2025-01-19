@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Calendar, Activity, DollarSign, Clock, Search, FileText, X, AlertTriangle, Heart } from 'lucide-react';
-import Sidebar from '../layout/Sidebar';
-import DashboardHeader from '../layout/DashboardHeader';
+import Sidebar from '../../layout/Sidebar';
+import DashboardHeader from '../../layout/DashboardHeader';
 import PatientQueue from './PatientQueue';
 import AppointmentCalendar from './AppointmentCalendar';
 import PatientStats from './PatientStats';
