@@ -4,7 +4,8 @@ go 1.23.0
 
 require (
 	github.com/google/generative-ai-go v0.19.0
-	github.com/shirou/gopsutil v3.21.11+incompatible
+	github.com/joho/godotenv v1.5.1
+	github.com/shirou/gopsutil/v3 v3.24.5
 	google.golang.org/api v0.217.0
 )
 
@@ -23,8 +24,9 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/shirou/gopsutil/v3 v3.24.5 // indirect
+	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
+	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
+	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.14 // indirect
 	github.com/tklauser/numcpus v0.8.0 // indirect

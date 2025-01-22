@@ -1,3 +1,4 @@
+// collector/network.go
 package collector
 
 import (

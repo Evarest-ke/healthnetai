@@ -1,3 +1,4 @@
+// collector/metrics.go
 package collector
 
 import (
