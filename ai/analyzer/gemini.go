@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"strings"
 
 	"github.com/Evarest-ke/healthnetai/models"
@@ -46,72 +47,108 @@ func (a *Analyzer) AnalyzeMetrics(metrics []models.Metrics) ([]models.Alert, err
 		return nil, fmt.Errorf("no metrics to analyze")
 	}
 
-	// Calculate current averages for thresholds
+	// Calculate averages and trends
 	var (
-		avgCPU       float64
-		avgMemory    float64
-		avgLatency   float64
-		avgBandwidth float64
+		avgCPU, avgMemory, avgLatency, avgBandwidth         float64
+		maxCPU, maxMemory, maxLatency, maxBandwidth         float64
+		cpuTrend, memoryTrend, latencyTrend, bandwidthTrend float64
 	)
 
-	for _, m := range metrics {
+	for i, m := range metrics {
+		// Calculate averages
 		avgCPU += m.CPUUsage
 		avgMemory += m.MemoryUsage
 		avgLatency += m.Latency
-		avgBandwidth += float64(m.BytesSent+m.BytesReceived) / (1024 * 1024) // MB/s
+		bandwidth := float64(m.BytesSent+m.BytesReceived) / (1024 * 1024)
+		avgBandwidth += bandwidth
+
+		// Track maximums
+		maxCPU = math.Max(maxCPU, m.CPUUsage)
+		maxMemory = math.Max(maxMemory, m.MemoryUsage)
+		maxLatency = math.Max(maxLatency, m.Latency)
+		maxBandwidth = math.Max(maxBandwidth, bandwidth)
+
+		// Calculate trends (change over time)
+		if i > 0 {
+			cpuTrend += m.CPUUsage - metrics[i-1].CPUUsage
+			memoryTrend += m.MemoryUsage - metrics[i-1].MemoryUsage
+			latencyTrend += m.Latency - metrics[i-1].Latency
+			prevBandwidth := float64(metrics[i-1].BytesSent+metrics[i-1].BytesReceived) / (1024 * 1024)
+			bandwidthTrend += bandwidth - prevBandwidth
+		}
 	}
+
 	count := float64(len(metrics))
 	avgCPU /= count
 	avgMemory /= count
 	avgLatency /= count
 	avgBandwidth /= count
 
-	prompt := fmt.Sprintf(`Analyze these network metrics and generate alerts if:
-1. CPU usage > 80%% (current: %.2f%%)
-2. Memory usage > 90%% (current: %.2f%%)
-3. Latency > 200ms (current: %.2f ms)
-4. Bandwidth > 800 MB/s (current: %.2f MB/s)
+	prompt := fmt.Sprintf(`Analyze these network metrics and generate alerts. Current state:
 
-Respond with ONLY a JSON array. Example:
+System Metrics:
+- CPU: %.2f%% (max: %.2f%%, trend: %+.2f%%)
+- Memory: %.2f%% (max: %.2f%%, trend: %+.2f%%)
+- Latency: %.2fms (max: %.2fms, trend: %+.2fms)
+- Bandwidth: %.2f MB/s (max: %.2f MB/s, trend: %+.2f MB/s)
+
+Alert Thresholds:
+- Critical: CPU > 80%%, Memory > 90%%, Latency > 200ms, Bandwidth > 800 MB/s
+- Warning: CPU > 70%%, Memory > 80%%, Latency > 150ms, Bandwidth > 600 MB/s
+
+Respond with ONLY a JSON array of alerts. Example:
 [
     {
         "severity": "warning",
-        "description": "High CPU usage detected: 85%%",
-        "recommended": "Investigate high CPU processes"
+        "description": "Memory usage trending up significantly: 85%%",
+        "recommended": "Monitor application memory consumption"
     }
-]
+]`,
+		avgCPU, maxCPU, cpuTrend,
+		avgMemory, maxMemory, memoryTrend,
+		avgLatency, maxLatency, latencyTrend,
+		avgBandwidth, maxBandwidth, bandwidthTrend)
 
-If no issues are detected, respond with an empty array: []`,
-		avgCPU, avgMemory, avgLatency, avgBandwidth)
+	// Debug logging
+	log.Printf("Sending prompt to Gemini API")
 
 	ctx := context.Background()
 	resp, err := a.model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
 		log.Printf("Gemini API error: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("gemini API error: %v", err)
 	}
 
+	// Debug logging
+	log.Printf("Received response from Gemini API")
+
 	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
-		return []models.Alert{}, nil // Return empty alerts instead of error
+		log.Printf("No response candidates from Gemini API")
+		return []models.Alert{}, nil
 	}
 
 	textContent := resp.Candidates[0].Content.Parts[0].(genai.Text)
 	cleanedResponse := strings.TrimSpace(string(textContent))
 
-	// Find the JSON array
+	// Debug logging
+	log.Printf("Raw API response: %s", cleanedResponse)
+
 	startIdx := strings.Index(cleanedResponse, "[")
 	endIdx := strings.LastIndex(cleanedResponse, "]")
 	if startIdx == -1 || endIdx == -1 {
-		log.Printf("Invalid response format: %s", cleanedResponse)
+		log.Printf("Invalid JSON format in response: %s", cleanedResponse)
 		return []models.Alert{}, nil
 	}
 
 	jsonResponse := cleanedResponse[startIdx : endIdx+1]
 	var alerts []models.Alert
 	if err := json.Unmarshal([]byte(jsonResponse), &alerts); err != nil {
-		log.Printf("Failed to parse response: %v\nResponse: %s", err, jsonResponse)
+		log.Printf("JSON parsing error: %v\nResponse: %s", err, jsonResponse)
 		return []models.Alert{}, nil
 	}
+
+	// Debug logging
+	log.Printf("Successfully parsed %d alerts", len(alerts))
 
 	return alerts, nil
 }
