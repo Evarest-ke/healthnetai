@@ -137,11 +137,17 @@ func (p *Predictor) calculateConfidence() float64 {
 
 	// Calculate R-squared
 	rSquared := calculateRSquared(predictions, actuals)
-	if math.IsNaN(rSquared) {
-		return 0.5 // Return 50% if R-squared calculation fails
-	}
 
-	return math.Max(math.Min(rSquared, 1.0), 0.1)
+	// Calculate variance and normalize it
+	variance := p.calculateVariance()
+	varianceWeight := math.Exp(-variance / 1e12) // Normalize for large bandwidth numbers
+
+	// Combine R-squared and variance for final confidence
+	// Higher variance reduces confidence, higher R-squared increases it
+	confidence := (rSquared*0.7 + varianceWeight*0.3)
+
+	// Ensure confidence is between 0.1 and 1.0
+	return math.Max(math.Min(confidence, 1.0), 0.1)
 }
 
 func (p *Predictor) calculateVariance() float64 {
@@ -152,6 +158,7 @@ func (p *Predictor) calculateVariance() float64 {
 	var sum float64
 	var sumSquares float64
 
+	// Calculate variance for bandwidth
 	for _, metrics := range p.historicalData {
 		value := float64(metrics.BytesSent + metrics.BytesReceived)
 		sum += value
@@ -159,7 +166,10 @@ func (p *Predictor) calculateVariance() float64 {
 	}
 
 	n := float64(len(p.historicalData))
-	variance := (sumSquares - (sum*sum)/n) / (n - 1)
+	mean := sum / n
+
+	// Calculate variance
+	variance := (sumSquares/n - mean*mean)
 
 	return variance
 }
