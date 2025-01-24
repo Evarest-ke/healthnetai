@@ -1,9 +1,9 @@
 {
-  "AverageBandwidth": 104857600,
-  "AverageLatency": 100,
-  "CPUBaseline": 50,
-  "MemoryBaseline": 50,
-  "DiskBaseline": 50,
-  "PacketsBaseline": 0,
-  "UpdatedAt": "2025-01-22T08:29:35.648928409+03:00"
+  "AverageBandwidth": 945.9805472469329,
+  "AverageLatency": 543.245,
+  "CPUBaseline": 10.43640140635403,
+  "MemoryBaseline": 0,
+  "DiskBaseline": 0,
+  "PacketsBaseline": 998836.58,
+  "UpdatedAt": "2025-01-24T19:11:13.730186487+03:00"
 }

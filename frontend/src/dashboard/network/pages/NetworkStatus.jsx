@@ -21,36 +21,109 @@ import NetworkAlert from '../components/NetworkAlert';
 import NetworkPerformanceChart from '../components/NetworkPerformanceChart';
 import NetworkTopology from '../components/NetworkTopology';
 import BandwidthDistribution from '../components/BandwidthDistribution';
+import { useNetworkMetrics } from '../../../hooks/useNetwork';
+import { networkService } from '../../../services/network';
+import { toast } from 'react-toastify';
 
-export default function NetworkStatus() {
+const NetworkStatus = () => {
+  const [metrics, setMetrics] = useState({
+    cpu_usage: 0,
+    memory_usage: 0,
+    network_latency: 0,
+    bandwidth: {
+      current: 0,
+      total: 100,
+      usage: 0
+    },
+    latency: {
+      average: 0,
+      peak: 0
+    },
+    packetLoss: {
+      rate: 0,
+      threshold: 5
+    },
+    activeConnections: {
+      count: 0,
+      capacity: 1000
+    }
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
   const [selectedMetric, setSelectedMetric] = useState('bandwidth');
-
-  // Mock real-time network metrics
-  const networkMetrics = {
-    bandwidth: {
-      current: '850 Mbps',
-      total: '1000 Mbps',
-      usage: 85,
-      trend: 'up'
+  const [extendedMetrics, setExtendedMetrics] = useState({
+    ...metrics,
+    networkHealth: {
+      uptime: 0,
+      reliability: 0,
+      throughput: 0
     },
-    latency: {
-      average: '25ms',
-      peak: '45ms',
-      trend: 'down'
+    edgeDevices: {
+      total: 0,
+      active: 0,
+      syncing: 0
     },
-    packetLoss: {
-      rate: '0.1%',
-      threshold: '1%',
-      status: 'normal'
-    },
-    activeConnections: {
-      count: 2850,
-      capacity: 5000,
-      trend: 'up'
+    aiMetrics: {
+      modelAccuracy: 0,
+      inferenceTime: 0,
+      lastUpdate: null
     }
-  };
+  });
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchMetrics = async () => {
+      if (!mounted) return;
+      
+      try {
+        const data = await networkService.getMetrics();
+        if (mounted) {
+          setMetrics(prevMetrics => ({
+            ...prevMetrics,
+            ...data
+          }));
+          setLoading(false);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err.message);
+          setLoading(false);
+          toast.error('Failed to fetch network metrics');
+        }
+      }
+    };
+
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 6000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-red-500">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
+          <p className="text-lg font-semibold">Error loading network status</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   // Performance metrics chart data
   const performanceData = {
@@ -155,33 +228,33 @@ export default function NetworkStatus() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <NetworkHealthCard
                 title="Bandwidth Usage"
-                value={networkMetrics.bandwidth.current}
+                value={metrics.bandwidth.current}
                 trend="up"
-                subValue={`${networkMetrics.bandwidth.usage}% of ${networkMetrics.bandwidth.total}`}
+                subValue={`${metrics.bandwidth.usage}% of ${metrics.bandwidth.total}`}
                 icon={Zap}
                 color="blue"
               />
               <NetworkHealthCard
                 title="Average Latency"
-                value={networkMetrics.latency.average}
+                value={metrics.latency.average}
                 trend="down"
-                subValue={`Peak: ${networkMetrics.latency.peak}`}
+                subValue={`Peak: ${metrics.latency.peak}`}
                 icon={Clock}
                 color="yellow"
               />
               <NetworkHealthCard
                 title="Packet Loss"
-                value={networkMetrics.packetLoss.rate}
+                value={metrics.packetLoss.rate}
                 trend="stable"
-                subValue={`Threshold: ${networkMetrics.packetLoss.threshold}`}
+                subValue={`Threshold: ${metrics.packetLoss.threshold}`}
                 icon={Activity}
                 color="green"
               />
               <NetworkHealthCard
                 title="Active Connections"
-                value={networkMetrics.activeConnections.count}
+                value={metrics.activeConnections.count}
                 trend="up"
-                subValue={`${Math.round((networkMetrics.activeConnections.count / networkMetrics.activeConnections.capacity) * 100)}% of capacity`}
+                subValue={`${Math.round((metrics.activeConnections.count / metrics.activeConnections.capacity) * 100)}% of capacity`}
                 icon={Users}
                 color="indigo"
               />
@@ -222,4 +295,6 @@ export default function NetworkStatus() {
       </div>
     </div>
   );
-} 
+};
+
+export default NetworkStatus; 
