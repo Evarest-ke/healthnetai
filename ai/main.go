@@ -3,12 +3,15 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/Evarest-ke/healthnetai/analyzer"
 	"github.com/Evarest-ke/healthnetai/collector"
 	"github.com/Evarest-ke/healthnetai/models"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
@@ -32,87 +35,119 @@ func main() {
 	}
 	predictor := analyzer.NewPredictor(10)
 
+	// Initialize Gin router
+	r := gin.Default()
+
+	// Add CORS middleware
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"}, // Vite's default port
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
+
+	// Start metrics collection
 	metricsChan := networkCollector.Start()
 	var metrics []models.Metrics
 
-	log.Println("Starting network monitoring system...")
-	log.Println("Development mode: Analysis will run every 1 minute")
-
-	// Add alert rate limiting
-	alertThrottle := time.NewTicker(1 * time.Minute)
-	defer alertThrottle.Stop()
-
-	// Main monitoring loop
-	for metric := range metricsChan {
-		select {
-		case <-alertThrottle.C:
-			// Process alerts only once per minute
-			if alerts := networkCollector.Baseline.DetectAnomalies(metric); len(alerts) > 0 {
-				log.Println("🚨 Baseline Anomalies Detected:")
-				for _, alert := range alerts {
-					log.Printf("• %s: %s\n  ↳ %s",
-						alert.Severity, alert.Description, alert.Recommended)
+	// API Routes
+	api := r.Group("/api")
+	{
+		network := api.Group("/network")
+		{
+			// Get current metrics
+			network.GET("/metrics", func(c *gin.Context) {
+				sysMetrics, err := networkCollector.SystemMetrics()
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+					return
 				}
-			}
-		default:
-			// Continue processing metrics without alerts
-		}
-		predictor.AddMetrics(metric)
-		metrics = append(metrics, metric)
+				c.JSON(http.StatusOK, sysMetrics)
+			})
 
-		// Get system metrics
-		sysMetrics, err := networkCollector.SystemMetrics()
-		if err != nil {
-			log.Printf("Error collecting system metrics: %v", err)
-		} else {
-			log.Printf("Memory Usage: %.2f%%, Disk Usage: %.2f%%",
-				sysMetrics.MemoryUsage,
-				sysMetrics.DiskUsage)
-		}
-
-		// Analyze every 1 minute (10 intervals of 6 seconds)
-		if len(metrics) >= 10 {
-			log.Println("=== Analysis Report ===")
-			log.Println("Time:", time.Now().Format("15:04:05"))
-
-			// Get AI analysis
-			alerts, err := networkAnalyzer.AnalyzeMetrics(metrics)
-			if err != nil {
-				log.Printf("Analysis error: %v", err)
-			} else {
-				log.Println("🔍 AI Alerts:")
-				for _, alert := range alerts {
-					log.Printf("• %s: %s\n  ↳ Recommendation: %s",
-						alert.Severity, alert.Description, alert.Recommended)
+			// Get alerts
+			network.GET("/alerts", func(c *gin.Context) {
+				if len(metrics) > 0 {
+					alerts := networkCollector.Baseline.DetectAnomalies(metrics[len(metrics)-1])
+					c.JSON(http.StatusOK, alerts)
+				} else {
+					c.JSON(http.StatusOK, []models.Alert{})
 				}
-			}
+			})
 
 			// Get predictions
-			predictions, err := predictor.PredictNextHour()
-			if err != nil {
-				log.Printf("Prediction error: %v", err)
-			} else {
-				log.Println("🔮 Predictions for Next Hour:")
-				for _, pred := range predictions {
-					log.Printf("• %s: %.2f (Confidence: %.1f%%)",
-						pred.Metric, pred.Value, pred.Confidence*100)
+			network.GET("/predictions", func(c *gin.Context) {
+				predictions, err := predictor.PredictNextHour()
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+					return
 				}
-			}
+				c.JSON(http.StatusOK, predictions)
+			})
 
-			// Calculate averages
-			averages := networkCollector.CalculateAverages(metrics)
-			log.Println("=== End Report ===")
-			log.Println() // Single empty line between reports
+			// Get analysis
+			network.GET("/analysis", func(c *gin.Context) {
+				if len(metrics) >= 10 {
+					analysis, err := networkAnalyzer.AnalyzeMetrics(metrics)
+					if err != nil {
+						c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+						return
+					}
+					c.JSON(http.StatusOK, analysis)
+				} else {
+					c.JSON(http.StatusOK, []models.Alert{})
+				}
+			})
 
-			log.Printf("📊 One-Minute Averages:")
-			log.Printf("• Bandwidth: %.2f MB/s", float64(averages.BytesReceived+averages.BytesSent)/(1024*1024))
-			log.Printf("• Latency: %.2f ms", averages.Latency)
-			log.Printf("• CPU: %.2f%%", averages.CPUUsage)
-			log.Printf("• Memory: %.2f%%", averages.MemoryUsage)
-			log.Printf("• Disk: %.2f%%", averages.DiskUsage)
-
-			// Reset metrics array
-			metrics = metrics[:0]
+			// Get averages
+			network.GET("/averages", func(c *gin.Context) {
+				if len(metrics) > 0 {
+					averages := networkCollector.CalculateAverages(metrics)
+					c.JSON(http.StatusOK, averages)
+				} else {
+					c.JSON(http.StatusOK, gin.H{
+						"latency":      0,
+						"bandwidth":    0,
+						"cpu_usage":    0,
+						"memory_usage": 0,
+						"disk_usage":   0,
+					})
+				}
+			})
 		}
+	}
+
+	// Start monitoring loop in a goroutine
+	go func() {
+		alertThrottle := time.NewTicker(1 * time.Minute)
+		defer alertThrottle.Stop()
+
+		for metric := range metricsChan {
+			select {
+			case <-alertThrottle.C:
+				if alerts := networkCollector.Baseline.DetectAnomalies(metric); len(alerts) > 0 {
+					log.Println("🚨 Baseline Anomalies Detected:")
+					for _, alert := range alerts {
+						log.Printf("• %s: %s\n  ↳ %s",
+							alert.Severity, alert.Description, alert.Recommended)
+					}
+				}
+			default:
+			}
+			predictor.AddMetrics(metric)
+			metrics = append(metrics, metric)
+
+			// Keep only last hour of metrics (600 samples at 6-second intervals)
+			if len(metrics) > 600 {
+				metrics = metrics[1:]
+			}
+		}
+	}()
+
+	// Start the server
+	log.Println("Starting server on :8080...")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatal("Failed to start server:", err)
 	}
 }
