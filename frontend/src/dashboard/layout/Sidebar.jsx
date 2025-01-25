@@ -66,7 +66,7 @@ export default function Sidebar({ userType }) {
 
   return (
     <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
-      <div className="flex-1 flex flex-col min-h-0 bg-gradient-to-b from-indigo-700 to-indigo-900">
+      <div className="flex-1 flex flex-col min-h-0 bg-blue-900">
         {/* <div className="flex items-center h-16 flex-shrink-0 px-4">
           <img
             className="h-8 w-auto"
