@@ -31,8 +31,9 @@ import ErrorBoundary from './components/error/ErrorBoundary';
 import SyncStatus from './components/common/SyncStatus';
 import { performanceMonitor } from './utils/monitoring/performanceMonitor';
 import 'react-toastify/dist/ReactToastify.css';
+import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
-
+import FeaturesPage from './pages/FeaturesPage';
 function App() {
   const [syncStatus, setSyncStatus] = React.useState('online');
   const [lastSync, setLastSync] = React.useState(new Date());
@@ -65,7 +66,8 @@ function App() {
             <Route path="/doctor/records" element={<MedicalRecordsPage />} />
             <Route path="/doctor/analytics" element={<AnalyticsPage />} />
             <Route path="/contact" element={<ContactPage />} />
-
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/features" element={<FeaturesPage />} />
             <Route path="/" element={
               <main>
                 <Header />
