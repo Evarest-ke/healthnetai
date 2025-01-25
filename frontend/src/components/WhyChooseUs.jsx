@@ -53,13 +53,15 @@ const WhyChooseUs = () => {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="text-center"
+                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all p-6"
               >
-                <div className="inline-flex items-center justify-center w-16 h-16 mb-6 bg-blue-100 rounded-full">
-                  <Icon className="w-8 h-8 text-blue-600" />
+                <div className="flex flex-col items-center text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 mb-6 bg-blue-100 rounded-full">
+                    <Icon className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-4">{feature.title}</h3>
+                  <p className="text-gray-600">{feature.description}</p>
                 </div>
-                <h3 className="text-xl font-semibold mb-4">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
               </motion.div>
             );
           })}

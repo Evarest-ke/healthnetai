@@ -7,8 +7,15 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
+  const navigation = [
+    { name: 'Home', href: '/' },
+    { name: 'Features', href: '/#features' },
+    { name: 'About', href: '/#about' },
+    { name: 'Contact', href: '/contact' },
+  ];
+
   return (
-    <header className="bg-white shadow-sm">
+    <header className="sticky top-0 z-50 bg-white shadow-md">
       <nav className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -19,9 +26,15 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-gray-600 hover:text-blue-600">Features</a>
-            <a href="#about" className="text-gray-600 hover:text-blue-600">About</a>
-            <a href="#contact" className="text-gray-600 hover:text-blue-600">Contact</a>
+            {navigation.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                {item.name}
+              </Link>
+            ))}
             <Button 
               variant="secondary" 
               className="mr-2"
