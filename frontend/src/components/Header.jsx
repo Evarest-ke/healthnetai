@@ -9,8 +9,8 @@ const Header = () => {
 
   const navigation = [
     { name: 'Home', href: '/' },
-    { name: 'Features', href: '/#features' },
-    { name: 'About', href: '/#about' },
+    { name: 'Features', href: '/features' },
+    { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
   ];
 
@@ -62,9 +62,9 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden py-4">
             <div className="flex flex-col space-y-4">
-              <a href="#features" className="text-gray-600 hover:text-blue-600">Features</a>
-              <a href="#about" className="text-gray-600 hover:text-blue-600">About</a>
-              <a href="#contact" className="text-gray-600 hover:text-blue-600">Contact</a>
+              <a href="/features" className="text-gray-600 hover:text-blue-600">Features</a>
+              <a href="/about" className="text-gray-600 hover:text-blue-600">About</a>
+              <a href="/contact" className="text-gray-600 hover:text-blue-600">Contact</a>
               <Button 
                 variant="secondary" 
                 className="w-full"
