@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import webSocketService from '../services/websocket';
 
 export function useWebSocket() {
@@ -9,9 +9,6 @@ export function useWebSocket() {
     const handleMessage = (data) => {
       if (data.type === 'connection') {
         setIsConnected(data.status === 'connected');
-        if (data.status === 'error') {
-          console.error('WebSocket connection error:', data.error);
-        }
       } else {
         setMetrics(data);
       }

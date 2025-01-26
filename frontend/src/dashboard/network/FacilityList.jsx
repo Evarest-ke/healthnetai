@@ -1,35 +1,17 @@
 import React, { useState } from 'react';
 import { Search, Wifi, WifiOff, AlertTriangle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-export default function FacilityList({ selectedFacility }) {
+export default function FacilityList({ clinics, selectedFacility, onEmergencyShare }) {
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const facilities = [
-    {
-      id: 1,
-      name: 'Facility A',
-      status: 'online',
-      bandwidth: '45 Mbps',
-      latency: '25ms',
-      trend: 'up'
-    },
-    {
-      id: 2,
-      name: 'Facility B',
-      status: 'offline',
-      bandwidth: '0 Mbps',
-      latency: 'N/A',
-      trend: 'down'
-    },
-    {
-      id: 3,
-      name: 'Facility C',
-      status: 'warning',
-      bandwidth: '30 Mbps',
-      latency: '45ms',
-      trend: 'up'
+  const [sharingSource, setSharingSource] = useState(null);
+
+  const handleShareRequest = (targetId) => {
+    if (sharingSource && targetId) {
+      onEmergencyShare(sharingSource, targetId);
+      setSharingSource(null);
     }
-  ];
+  };
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -51,8 +33,8 @@ export default function FacilityList({ selectedFacility }) {
     return <ArrowDownRight className="h-4 w-4 text-red-500" />;
   };
 
-  const filteredFacilities = facilities.filter(facility =>
-    facility.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredFacilities = clinics.filter(clinic =>
+    clinic.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -71,49 +53,40 @@ export default function FacilityList({ selectedFacility }) {
 
       {/* Facilities List */}
       <div className="space-y-3">
-        {filteredFacilities.map((facility) => (
-          <div
-            key={facility.id}
+        {filteredFacilities.map((clinic) => (
+          <motion.div
+            key={clinic.id}
             className={`
               p-4 rounded-lg border transition-all
-              ${selectedFacility?.id === facility.id 
-                ? 'border-indigo-500 ring-2 ring-indigo-200' 
-                : 'hover:bg-gray-50'
-              }
+              ${selectedFacility === clinic.id ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200'}
             `}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                {getStatusIcon(facility.status)}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900">
-                    {facility.name}
-                  </h3>
-                  <span className={`
-                    text-xs px-2 py-1 rounded-full
-                    ${facility.status === 'online' ? 'bg-green-100 text-green-800' :
-                      facility.status === 'offline' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'}
-                  `}>
-                    {facility.status}
-                  </span>
-                </div>
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-medium">{clinic.name}</h3>
+                <p className="text-sm text-gray-500">
+                  Signal: {(clinic.terrainFactor * 100).toFixed(0)}%
+                </p>
               </div>
-              {facility.status !== 'offline' && (
-                <div className="text-right">
-                  <div className="flex items-center space-x-1">
-                    <span className="text-sm font-medium text-gray-900">
-                      {facility.bandwidth}
-                    </span>
-                    {getTrendIcon(facility.trend)}
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Latency: {facility.latency}
-                  </p>
-                </div>
-              )}
+              <div className="flex space-x-2">
+                {sharingSource ? (
+                  <button
+                    onClick={() => handleShareRequest(clinic.id)}
+                    className="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full"
+                  >
+                    Share With
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setSharingSource(clinic.id)}
+                    className="px-3 py-1 text-sm bg-indigo-100 text-indigo-800 rounded-full"
+                  >
+                    Share Bandwidth
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 

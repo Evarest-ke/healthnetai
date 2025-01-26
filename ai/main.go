@@ -2,6 +2,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -10,8 +11,11 @@ import (
 	"github.com/Evarest-ke/healthnetai/analyzer"
 	"github.com/Evarest-ke/healthnetai/collector"
 	"github.com/Evarest-ke/healthnetai/models"
+	"github.com/Evarest-ke/healthnetai/services/kisumu"
+	"github.com/Evarest-ke/healthnetai/services/websocket"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	ws "github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 )
 
@@ -27,6 +31,12 @@ func main() {
 		log.Fatal("GEMINI_API_KEY environment variable not set")
 	}
 
+	// Get HealthSites.io API key from environment
+	healthsitesKey := os.Getenv("HEALTHSITES_API_KEY")
+	if healthsitesKey == "" {
+		log.Fatal("HEALTHSITES_API_KEY environment variable not set")
+	}
+
 	// Initialize components
 	networkCollector := collector.NewCollector(6 * time.Second)
 	networkAnalyzer, err := analyzer.NewAnalyzer(apiKey, 0.8)
@@ -35,15 +45,28 @@ func main() {
 	}
 	predictor := analyzer.NewPredictor(10)
 
+	// Initialize Kisumu network service
+	kisumuNetwork := kisumu.NewNetworkService(healthsitesKey)
+
+	// Initialize WebSocket hub
+	wsHub := websocket.NewHub()
+	go wsHub.Run()
+
+	// WebSocket upgrader
+	upgrader := ws.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true // Allow all origins in development
+		},
+	}
+
 	// Initialize Gin router
 	r := gin.Default()
 
 	// Add CORS middleware
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // Vite's default port
+		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
 		AllowCredentials: true,
 	}))
 
@@ -115,6 +138,74 @@ func main() {
 					})
 				}
 			})
+
+			// Kisumu-specific endpoints
+			kisumu := network.Group("/kisumu")
+			{
+				// Get all clinics
+				kisumu.GET("/clinics", func(c *gin.Context) {
+					clinics, err := kisumuNetwork.GetClinics()
+					if err != nil {
+						c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+						return
+					}
+					c.JSON(http.StatusOK, clinics)
+				})
+
+				// Get clinic status
+				kisumu.GET("/clinic/:id", func(c *gin.Context) {
+					clinicID := c.Param("id")
+					metrics, err := kisumuNetwork.GetClinicMetrics(clinicID)
+					if err != nil {
+						c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+						return
+					}
+					c.JSON(http.StatusOK, metrics)
+				})
+
+				// Emergency bandwidth sharing
+				kisumu.POST("/emergency-share", func(c *gin.Context) {
+					var req struct {
+						SourceID string `json:"source_id"`
+						TargetID string `json:"target_id"`
+					}
+
+					if err := c.BindJSON(&req); err != nil {
+						c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+						return
+					}
+
+					canShare, bandwidth := kisumuNetwork.CheckEmergencyBandwidthSharing(
+						req.SourceID,
+						req.TargetID,
+					)
+
+					c.JSON(http.StatusOK, gin.H{
+						"can_share":        canShare,
+						"bandwidth_factor": bandwidth,
+						"timestamp":        time.Now(),
+					})
+				})
+
+				// WebSocket endpoint for real-time metrics
+				kisumu.GET("/ws", func(c *gin.Context) {
+					conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+					if err != nil {
+						log.Printf("Failed to upgrade connection: %v", err)
+						return
+					}
+
+					client := &websocket.Client{
+						Hub:  wsHub,
+						Conn: conn,
+						Send: make(chan []byte, 256),
+					}
+					client.Hub.Register(client)
+
+					// Start goroutine for handling client messages
+					go client.WritePump()
+				})
+			}
 		}
 	}
 
@@ -141,6 +232,11 @@ func main() {
 			// Keep only last hour of metrics (600 samples at 6-second intervals)
 			if len(metrics) > 600 {
 				metrics = metrics[1:]
+			}
+
+			// Broadcast metrics to WebSocket clients
+			if data, err := json.Marshal(metric); err == nil {
+				wsHub.Broadcast(data)
 			}
 		}
 	}()
