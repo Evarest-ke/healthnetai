@@ -8,10 +8,14 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <div className="flex items-center">
-              <Heart className="w-6 h-6 text-white mr-2" />
-              <span className="text-xl font-bold">HealthNetAi</span>
-            </div>
+          <div className="flex items-center mb-4 md:mb-0">
+            <img
+              src="/healthnetai_logo.png"
+              alt="HealthNet AI"
+              className="h-8 w-auto"
+            />
+            <span className="ml-2 text-xl font-bold">HealthNetAi</span>
+          </div>
             <p className="text-blue-100">
               Making chronic disease management easier for everyone.
             </p>

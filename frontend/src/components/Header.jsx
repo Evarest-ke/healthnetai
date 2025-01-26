@@ -20,7 +20,11 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <Heart className="w-6 h-6 text-blue-600" />
+            <img
+              src="/healthnetai_logo.png"
+              alt="HealthNet AI"
+              className="h-8 w-auto"
+            />
             <span className="ml-2 text-xl font-bold">HealthNetAi</span>
           </Link>
 

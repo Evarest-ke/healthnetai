@@ -5,21 +5,21 @@ import { Star } from 'lucide-react';
 const testimonials = [
   {
     id: 1,
-    name: 'Sarah Johnson',
+    name: 'Maurice Otieno',
     role: 'Patient',
     content: 'This platform has made managing my diabetes so much easier. I can track my metrics and communicate with my doctor all in one place.',
     rating: 5
   },
   {
     id: 2,
-    name: 'Dr. Michael Chen',
+    name: 'Dr. Alfred Gitonga',
     role: 'Healthcare Provider',
     content: 'As a healthcare provider, this platform has streamlined my patient management process significantly. The interface is intuitive and user-friendly.',
     rating: 5
   },
   {
     id: 3,
-    name: 'Emma Thompson',
+    name: 'Emma Akinyi',
     role: 'Patient',
     content: 'I love how easy it is to track my medications and appointments. The reminders have been a game-changer for my health management.',
     rating: 5
