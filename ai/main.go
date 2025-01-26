@@ -31,11 +31,8 @@ func main() {
 		log.Fatal("GEMINI_API_KEY environment variable not set")
 	}
 
-	// Get HealthSites.io API key from environment
+	// Get HealthSites.io API key from environment (optional when using mock data)
 	healthsitesKey := os.Getenv("HEALTHSITES_API_KEY")
-	if healthsitesKey == "" {
-		log.Fatal("HEALTHSITES_API_KEY environment variable not set")
-	}
 
 	// Initialize components
 	networkCollector := collector.NewCollector(6 * time.Second)
