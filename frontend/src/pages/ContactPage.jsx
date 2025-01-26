@@ -31,6 +31,24 @@ const ContactPage = () => {
     <div className="flex flex-col min-h-screen">
       <Header />
       
+      <section className="relative py-20 bg-blue-900 text-white">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-3xl mx-auto text-center"
+          >
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              Let's Bridge the Gap Together
+            </h1>
+            <p className="text-xl text-blue-100">
+              Clinics, NGOs, governments, or telecom providers—we're here to tailor solutions that keep your community connected to care.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       <main className="flex-grow bg-gray-50 py-20">
         <div className="container mx-auto px-4">
           <motion.div
@@ -59,7 +77,7 @@ const ContactPage = () => {
                 <Mail className="w-6 h-6 text-blue-600" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Email Us</h3>
-              <p className="text-gray-600">support@healthnetai.com</p>
+              <p className="text-gray-600">stellaacharoiro@gmail.com</p>
             </motion.div>
 
             <motion.div
