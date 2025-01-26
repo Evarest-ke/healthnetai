@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/Evarest-ke/healthnetai/analyzer"
+	"github.com/Evarest-ke/healthnetai/backend/database"
+	"github.com/Evarest-ke/healthnetai/backend/handlers"
 	"github.com/Evarest-ke/healthnetai/collector"
 	"github.com/Evarest-ke/healthnetai/models"
 	"github.com/Evarest-ke/healthnetai/services/kisumu"
@@ -61,7 +63,7 @@ func main() {
 
 	// Add CORS middleware
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://healthnetai.vercel.app", "http://localhost:5173"},
+		AllowOrigins:     []string{"https://healthnetai.vercel.app", "http://localhost:5173", "http://localhost:5174"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
@@ -70,6 +72,16 @@ func main() {
 	// Start metrics collection
 	metricsChan := networkCollector.Start()
 	var metrics []models.Metrics
+
+	// Initialize database
+	database.InitDB("./backend/database/healthnet.db")
+
+	// Add auth routes
+	auth := r.Group("/api/auth")
+	{
+		auth.POST("/signup", handlers.Signup)
+		auth.POST("/login", handlers.Login)
+	}
 
 	// API Routes
 	api := r.Group("/api")

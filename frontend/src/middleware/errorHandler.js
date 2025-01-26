@@ -6,8 +6,3 @@ export const handleApiError = (error) => {
   return Promise.reject(error);
 };
 
-// Update api.js to use error handler
-api.interceptors.response.use(
-  (response) => response,
-  (error) => handleApiError(error)
-);

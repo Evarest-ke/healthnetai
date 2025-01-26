@@ -4,7 +4,9 @@ import { z } from 'zod';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { emailSchema, passwordSchema } from '../../utils/validation';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { authService } from '../../services/auth';
 
 const loginSchema = z.object({
   email: emailSchema,
@@ -18,6 +20,7 @@ const LoginForm = () => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,10 +33,28 @@ const LoginForm = () => {
     setIsLoading(true);
     
     try {
+      // First validate the form data
       await loginSchema.parseAsync(formData);
-      // Handle successful validation
-      console.log('Form data:', formData);
-      // Add your login logic here
+      
+      console.log("==Response login send====")
+
+      // Make API call to login endpoint
+      const response = await authService.login(formData);
+      
+      console.log("==Response====", response)
+
+      // Store the token
+      localStorage.setItem('token', response.token);
+      
+      // Redirect based on user role
+      if (response.role === 'admin') {
+        navigate('/network/dashboard');
+      } else if (response.role === 'doctor') {
+        navigate('/dashboard/doctor');
+      } else {
+        navigate('/dashboard');
+      }
+
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors = {};
@@ -42,6 +63,9 @@ const LoginForm = () => {
           fieldErrors[field] = err.message;
         });
         setErrors(fieldErrors);
+      } else {
+        // Handle API errors
+        toast.error(error.response?.data?.error || 'Failed to login');
       }
     } finally {
       setIsLoading(false);

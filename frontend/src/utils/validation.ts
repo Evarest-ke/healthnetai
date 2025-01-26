@@ -21,6 +21,6 @@ export const nameSchema = z
   .min(2, 'Name must be at least 2 characters long')
   .max(50, 'Name must be less than 50 characters');
 
-export const userTypeSchema = z.enum(['patient', 'provider'], {
+export const userTypeSchema = z.enum(['admin'], {
   required_error: 'Please select a user type',
 });

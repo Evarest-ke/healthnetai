@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { z } from 'zod';
+import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
+import { handleApiError } from '../../middleware/errorHandler';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
 import { emailSchema, passwordSchema, nameSchema, userTypeSchema } from '../../utils/validation';
 import { Link } from 'react-router-dom';
+import { authService } from '../../services/auth';
 
 const signUpSchema = z.object({
   fullName: nameSchema,
@@ -15,6 +19,7 @@ const signUpSchema = z.object({
 });
 
 const SignUpForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -33,11 +38,29 @@ const SignUpForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrors({});
 
     try {
+      // Validate form data
       await signUpSchema.parseAsync(formData);
-      // Add your signup logic here
-      console.log('Form data:', formData);
+
+      // Send data to backend using auth service
+      const response = await authService.signup(formData);
+
+      // Store token if returned
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+        
+        // Redirect based on user type
+        const redirectPath = formData.userType === 'admin' 
+          ? '/network/dashboard'
+          : '/dashboard';
+        
+        navigate(redirectPath);
+      } else {
+        throw new Error('No token received from server');
+      }
+
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors = {};
@@ -46,6 +69,8 @@ const SignUpForm = () => {
           fieldErrors[field] = err.message;
         });
         setErrors(fieldErrors);
+      } else {
+        handleApiError(error);
       }
     } finally {
       setIsLoading(false);
@@ -99,9 +124,7 @@ const SignUpForm = () => {
         error={errors.userType}
         options={[
           { value: '', label: 'Select user type' },
-          { value: 'patient', label: 'Patient' },
-          { value: 'provider', label: 'Healthcare Provider' },
-          { value: 'admin', label: 'Administrator' },
+          { value: 'admin', label: 'Network Admin' },
         ]}
       />
 
