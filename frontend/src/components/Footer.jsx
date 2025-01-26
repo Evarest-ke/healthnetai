@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
+import 'leaflet/dist/leaflet.css';
 
 const Footer = () => {
   return (
