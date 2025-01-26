@@ -35,7 +35,7 @@ export default function NetworkDashboard() {
   useEffect(() => {
     const fetchClinics = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/network/kisumu/clinics');
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/network/kisumu/clinics`);
         const text = await response.text();
         
         console.log('Raw response:', text);
@@ -77,7 +77,7 @@ export default function NetworkDashboard() {
 
   const handleEmergencyShare = async (sourceId, targetId) => {
     try {
-      const response = await fetch('http://localhost:8080/api/network/kisumu/emergency-share', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/network/kisumu/emergency-share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sourceId, targetId }),

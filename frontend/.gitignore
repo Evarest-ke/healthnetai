@@ -52,6 +52,7 @@ logs
 .netlify
 
 # Vercel
+.env
 .vercel
 
 # TypeScript
