@@ -1,252 +1,212 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Wifi, WifiOff, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Wifi, WifiOff, AlertTriangle, RefreshCw, Share2 } from 'lucide-react';
 import axios from 'axios';
 import { getFacilityUpdates } from '../../mocks/api/facilities';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
 // Set your Mapbox token
 mapboxgl.accessToken = 'pk.eyJ1IjoiYXRob29oIiwiYSI6ImNtMWY2N3prZjJsN3MybHNjMWd3bThzOXcifQ.HNgAHQBkzGdrnuS1MtwYlQ';
 
-export default function ConnectivityMap({ onFacilitySelect }) {
-  const mapContainer = useRef(null);
-  const map = useRef(null);
-  const markers = useRef({});
-  
-  // Initial map center coordinates (example for NYC - adjust to your region)
+// Fix Leaflet default marker icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+export default function ConnectivityMap({ onFacilitySelect, clinics, realTimeMetrics }) {
+  const [map, setMap] = useState(null);
   const [lng] = useState(34.7575); // Kisumu longitude
   const [lat] = useState(-0.0917); // Kisumu latitude
   const [zoom] = useState(13); // Closer zoom for city level
+  const [selectedClinic, setSelectedClinic] = useState(null);
+  const [sharingMode, setSharingMode] = useState(false);
+  const [sharingLines, setSharingLines] = useState([]);
 
-  // Sample facilities data - Replace with your actual facilities
-  const [facilities, setFacilities] = useState([
-    {
-      id: 1,
-      name: 'Mount Sinai Hospital',
-      status: 'online',
-      coordinates: [-73.9526, 40.7900],
-      signal: 95,
-      patients: 245,
-      lastUpdate: '1 min ago'
-    },
-    {
-      id: 2,
-      name: 'NYU Langone Medical Center',
-      status: 'online',
-      coordinates: [-73.9747, 40.7421],
-      signal: 88,
-      patients: 180,
-      lastUpdate: '3 mins ago'
-    },
-    {
-      id: 3,
-      name: 'Bellevue Hospital Center',
-      status: 'warning',
-      coordinates: [-73.9759, 40.7392],
-      signal: 65,
-      patients: 156,
-      lastUpdate: '5 mins ago'
-    },
-    {
-      id: 4,
-      name: 'NewYork-Presbyterian',
-      status: 'offline',
-      coordinates: [-73.9419, 40.7644],
-      signal: 0,
-      patients: 200,
-      lastUpdate: '15 mins ago'
+  useEffect(() => {
+    console.log('Clinics data in map:', clinics);
+  }, [clinics]);
+
+  useEffect(() => {
+    if (map && clinics && clinics.length > 0) {
+      const bounds = L.latLngBounds(clinics.map(clinic => [
+        clinic.coordinates.latitude,
+        clinic.coordinates.longitude
+      ]));
+      map.fitBounds(bounds, { padding: [50, 50] });
     }
-  ]);
+  }, [map, clinics]);
 
-  // Add new state for loading
-  const [isLoading, setIsLoading] = useState(false);
+  const getMarkerIcon = (status, isSelected) => {
+    const color = status === 'online' ? 'bg-green-500' : 'bg-red-500';
+    const size = isSelected ? 'w-6 h-6' : 'w-4 h-4';
+    const border = isSelected ? 'border-2 border-blue-500' : '';
+    
+    return L.divIcon({
+      className: 'custom-marker',
+      html: `<div class="${size} rounded-full ${color} ${border}"></div>`,
+      iconSize: isSelected ? [24, 24] : [16, 16],
+    });
+  };
 
-  // Add function to fetch facility updates
-  const fetchFacilityUpdates = async () => {
+  const handleClinicClick = (clinic) => {
+    if (sharingMode && selectedClinic && selectedClinic.id !== clinic.id) {
+      // Initiate bandwidth sharing
+      initiateSharing(selectedClinic, clinic);
+      setSharingMode(false);
+      setSelectedClinic(null);
+    } else {
+      setSelectedClinic(clinic);
+      onFacilitySelect(clinic.id);
+    }
+  };
+
+  const initiateSharing = async (source, target) => {
     try {
-      setIsLoading(true);
-      
-      // Use mock data in development, real API in production
-      const data = process.env.NODE_ENV === 'development' 
-        ? await getFacilityUpdates()
-        : (await axios.get('/api/facilities/status')).data;
-      
-      setFacilities(data);
-      
-      // Update existing markers with new status
-      data.forEach(facility => {
-        if (markers.current[facility.id]) {
-          const el = markers.current[facility.id].getElement();
-          el.innerHTML = getFacilityMarkerHTML(facility);
-          
-          // Update popup content
-          markers.current[facility.id].getPopup().setHTML(getFacilityPopupHTML(facility));
-        }
-      });
-    } catch (error) {
-      console.error('Error fetching facility updates:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Add polling effect
-  useEffect(() => {
-    // Initial fetch
-    fetchFacilityUpdates();
-
-    // Set up polling interval (every 30 seconds)
-    const intervalId = setInterval(fetchFacilityUpdates, 30000);
-
-    // Cleanup interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []);
-
-  useEffect(() => {
-    // Wait for the container ref to be available
-    if (mapContainer.current && !map.current) {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [lng, lat],
-        zoom: zoom,
-        maxBounds: [
-          [34.7000, -0.1500], // Southwest coordinates
-          [34.8000, -0.0500]  // Northeast coordinates
-        ]
+      const response = await fetch('http://localhost:8080/api/network/kisumu/emergency-share', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sourceId: source.id,
+          targetId: target.id,
+        }),
       });
 
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      
-      // Add fullscreen control
-      map.current.addControl(new mapboxgl.FullscreenControl());
-
-      // Add scale control
-      map.current.addControl(new mapboxgl.ScaleControl({
-        maxWidth: 100,
-        unit: 'metric'
-      }));
-
-      // Optional: Add terrain control for 3D view
-      map.current.on('style.load', () => {
-        map.current.addSource('mapbox-dem', {
-          'type': 'raster-dem',
-          'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-          'tileSize': 512,
-          'maxzoom': 14
-        });
-        map.current.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
-      });
-    }
-
-    // Add markers only after map is initialized
-    if (map.current) {
-      facilities.forEach(facility => {
-        if (!markers.current[facility.id]) {
-          // Create custom marker element
-          const el = document.createElement('div');
-          el.className = 'facility-marker';
-          el.innerHTML = getFacilityMarkerHTML(facility);
-
-          // Create popup
-          const popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
-            .setHTML(getFacilityPopupHTML(facility));
-
-          // Add marker to map
-          markers.current[facility.id] = new mapboxgl.Marker(el)
-            .setLngLat(facility.coordinates)
-            .setPopup(popup)
-            .addTo(map.current);
-
-          // Add click handler
-          el.addEventListener('click', () => {
-            onFacilitySelect(facility);
-          });
-        }
-      });
-    }
-
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
+      if (!response.ok) {
+        throw new Error('Failed to initiate bandwidth sharing');
       }
-    };
-  }, [facilities, lng, lat, zoom]);
 
-  const getFacilityMarkerHTML = (facility) => {
-    const colors = {
-      online: 'bg-green-500',
-      offline: 'bg-red-500',
-      warning: 'bg-yellow-500'
-    };
+      // Add sharing line
+      setSharingLines(prev => [...prev, {
+        source: [source.coordinates.latitude, source.coordinates.longitude],
+        target: [target.coordinates.latitude, target.coordinates.longitude],
+        id: `${source.id}-${target.id}`
+      }]);
 
-    return `
-      <div class="relative p-2 rounded-full ${colors[facility.status]} 
-                  cursor-pointer transform hover:scale-110 transition-transform 
-                  shadow-lg border-2 border-white">
-        ${facility.status === 'online' ? 
-          `<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"></path>
-            <line x1="2" y1="20" x2="2" y2="20"></line>
-          </svg>` : 
-          facility.status === 'offline' ? 
-          `<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="1" y1="1" x2="23" y2="23"></line>
-            <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
-            <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
-            <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
-            <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
-            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-            <line x1="12" y1="20" x2="12" y2="20"></line>
-          </svg>` :
-          `<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>`
-        }
-      </div>
-    `;
-  };
-
-  const getFacilityPopupHTML = (facility) => {
-    const statusColors = {
-      online: 'text-green-600',
-      offline: 'text-red-600',
-      warning: 'text-yellow-600'
-    };
-
-    return `
-      <div class="p-3 min-w-[200px]">
-        <h3 class="font-semibold text-gray-900">${facility.name}</h3>
-        <div class="mt-2 space-y-1">
-          <p class="text-sm ${statusColors[facility.status]} font-medium">
-            Status: ${facility.status.charAt(0).toUpperCase() + facility.status.slice(1)}
-          </p>
-          <p class="text-sm">Signal Strength: ${facility.signal}%</p>
-          <p class="text-sm">Current Patients: ${facility.patients}</p>
-          <p class="text-xs text-gray-500">Last Update: ${facility.lastUpdate}</p>
-          <p class="text-xs text-gray-500 mt-2">
-            Coordinates: ${facility.coordinates[1].toFixed(4)}, ${facility.coordinates[0].toFixed(4)}
-          </p>
-        </div>
-      </div>
-    `;
+    } catch (error) {
+      console.error('Failed to initiate sharing:', error);
+      alert('Failed to initiate bandwidth sharing. Please try again.');
+    }
   };
 
   return (
-    <div className="space-y-4">
-      <div 
-        ref={mapContainer} 
-        className="h-[500px] rounded-lg shadow-inner"
-        style={{ border: '1px solid #e5e7eb' }}
-      />
-      {/* Legend */}
-      <div className="flex items-center justify-center space-x-6">
-        {/* ... legend items ... */}
+    <div className="w-full h-full relative">
+      <MapContainer
+        center={[lat, lng]}
+        zoom={zoom}
+        style={{ height: '100%', width: '100%' }}
+        whenCreated={setMap}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        />
+        {Array.isArray(clinics) && clinics.map((clinic) => (
+          clinic?.coordinates?.latitude && clinic?.coordinates?.longitude ? (
+            <React.Fragment key={clinic.id}>
+              <Marker
+                position={[Number(clinic.coordinates.latitude), Number(clinic.coordinates.longitude)]}
+                icon={getMarkerIcon(clinic.networkStatus, selectedClinic?.id === clinic.id)}
+                eventHandlers={{
+                  click: () => handleClinicClick(clinic),
+                }}
+              >
+                <Popup>
+                  <div className="p-2">
+                    <h3 className="font-semibold">{clinic.name}</h3>
+                    <p className="text-sm">
+                      Signal Quality: {(clinic.terrainFactor * 100).toFixed(0)}%
+                    </p>
+                    <p className={`text-sm ${
+                      clinic.networkStatus === 'online' ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      Status: {clinic.networkStatus}
+                    </p>
+                    <p className="text-sm">
+                      Bed Count: {clinic.bed_count}
+                    </p>
+                    {selectedClinic?.id === clinic.id && !sharingMode && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSharingMode(true);
+                        }}
+                        className="mt-2 px-3 py-1 bg-blue-500 text-white rounded-md text-sm flex items-center gap-2"
+                      >
+                        <Share2 className="w-4 h-4" />
+                        Share Bandwidth
+                      </button>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+              <Circle
+                center={[Number(clinic.coordinates.latitude), Number(clinic.coordinates.longitude)]}
+                radius={1500}
+                pathOptions={{
+                  color: clinic.networkStatus === 'online' ? 'green' : 'red',
+                  fillColor: clinic.networkStatus === 'online' ? 'green' : 'red',
+                  fillOpacity: 0.1
+                }}
+              />
+            </React.Fragment>
+          ) : null
+        ))}
+        {/* Render sharing lines */}
+        {sharingLines.map(line => (
+          <Polyline
+            key={line.id}
+            positions={[line.source, line.target]}
+            pathOptions={{
+              color: 'blue',
+              weight: 2,
+              dashArray: '5, 10',
+              opacity: 0.7
+            }}
+          />
+        ))}
+      </MapContainer>
+      <div className="absolute bottom-4 left-4 bg-white p-2 rounded-lg shadow z-[1000]">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center">
+            <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+            <span className="text-sm">Online</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+            <span className="text-sm">Offline</span>
+          </div>
+          {sharingMode && (
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
+              <span className="text-sm">Sharing Mode</span>
+            </div>
+          )}
+        </div>
       </div>
+      {sharingMode && (
+        <div className="absolute top-4 right-4 bg-blue-100 p-3 rounded-lg shadow z-[1000]">
+          <p className="text-sm text-blue-800">
+            Select another facility to share bandwidth with {selectedClinic?.name}
+          </p>
+          <button
+            onClick={() => {
+              setSharingMode(false);
+              setSelectedClinic(null);
+            }}
+            className="mt-2 px-3 py-1 bg-blue-500 text-white rounded-md text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   );
 }
