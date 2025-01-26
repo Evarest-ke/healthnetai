@@ -56,7 +56,7 @@ const FeaturesPage = () => {
               className="max-w-4xl mx-auto text-center"
             >
               <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                Enterprise-Grade Healthcare Technology for Everyone
+              Where Connectivity Meets Compassion
               </h1>
               <p className="text-xl text-blue-100 mb-8">
                 Powering the future of healthcare delivery with AI-driven insights

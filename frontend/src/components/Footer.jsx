@@ -17,7 +17,7 @@ const Footer = () => {
             <span className="ml-2 text-xl font-bold">HealthNetAi</span>
           </div>
             <p className="text-blue-100">
-              Making chronic disease management easier for everyone.
+            Bridging the Gap Between Connectivity and Care.
             </p>
           </div>
           

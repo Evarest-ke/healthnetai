@@ -32,11 +32,10 @@ const Hero = () => {
           className="max-w-4xl mx-auto text-center"
         >
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white">
-            Managing Chronic Conditions Made Simple
+          Bridging the Gap Between Connectivity and Care
           </h1>
           <p className="text-xl text-blue-100 mb-8">
-            A comprehensive platform connecting patients with healthcare providers
-            for better chronic disease management.
+          AI-Powered Solutions for Reliable Healthcare in Underserved Communities
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
