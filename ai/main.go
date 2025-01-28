@@ -81,6 +81,7 @@ func main() {
 	{
 		auth.POST("/signup", handlers.Signup)
 		auth.POST("/login", handlers.Login)
+		auth.GET("/me", handlers.GetCurrentUser)
 	}
 
 	// API Routes

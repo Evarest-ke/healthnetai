@@ -24,6 +24,14 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type UserResponse struct {
+	ID        int    `json:"id"`
+	FullName  string `json:"full_name"`
+	Email     string `json:"email"`
+	Role      string `json:"role"`
+	LastLogin string `json:"last_login"`
+}
+
 func Signup(c *gin.Context) {
 	var req SignupRequest
 
@@ -78,30 +86,33 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	var user struct {
-		ID           int64
-		PasswordHash string
-		Role         string
+	// Get full user data
+	var userData struct {
+		ID       int64
+		FullName string
+		Email    string
+		Role     string
 	}
 
+	var passwordHash string
 	err := database.DB.QueryRow(
-		"SELECT id, password_hash, role FROM users WHERE email = ?",
+		"SELECT id, full_name, email, role, password_hash FROM users WHERE email = ?",
 		req.Email,
-	).Scan(&user.ID, &user.PasswordHash, &user.Role)
+	).Scan(&userData.ID, &userData.FullName, &userData.Email, &userData.Role, &passwordHash)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
 	// Generate JWT token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID,
-		"role":    user.Role,
+		"user_id": userData.ID,
+		"role":    userData.Role,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	})
 
@@ -112,10 +123,35 @@ func Login(c *gin.Context) {
 	}
 
 	// Update last login
-	database.DB.Exec("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?", user.ID)
+	database.DB.Exec("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?", userData.ID)
 
 	c.JSON(http.StatusOK, gin.H{
-		"token": tokenString,
-		"role":  user.Role,
+		"token":     tokenString,
+		"role":      userData.Role,
+		"full_name": userData.FullName,
+		"email":     userData.Email,
 	})
+}
+
+func GetCurrentUser(c *gin.Context) {
+	// Get user ID from JWT token context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var user UserResponse
+	err := database.DB.QueryRow(`
+		SELECT id, full_name, email, role, last_login 
+		FROM users 
+		WHERE id = ?`,
+		userID,
+	).Scan(&user.ID, &user.FullName, &user.Email, &user.Role, &user.LastLogin)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user data"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
 }

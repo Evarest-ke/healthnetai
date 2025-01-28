@@ -35,8 +35,21 @@ export const authService = {
     localStorage.removeItem('token');
   },
 
-  getCurrentUser: () => {
-    const token = localStorage.getItem('token');
-    return token ? api.get('/api/auth/me') : null;
+  getCurrentUser: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return null;
+      }
+      
+      const response = await api.get('/api/auth/me');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+      }
+      throw error;
+    }
   },
 };

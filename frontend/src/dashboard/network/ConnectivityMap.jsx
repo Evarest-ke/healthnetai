@@ -7,6 +7,7 @@ import { getFacilityUpdates } from '../../mocks/api/facilities';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import api from '../../services/api';
 
 // Set your Mapbox token
 mapboxgl.accessToken = 'pk.eyJ1IjoiYXRob29oIiwiYSI6ImNtMWY2N3prZjJsN3MybHNjMWd3bThzOXcifQ.HNgAHQBkzGdrnuS1MtwYlQ';
@@ -68,28 +69,18 @@ export default function ConnectivityMap({ onFacilitySelect, clinics, realTimeMet
 
   const initiateSharing = async (source, target) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/network/kisumu/emergency-share`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sourceId: source.id,
-          targetId: target.id,
-        }),
+      const response = await api.post('/api/network/kisumu/emergency-share', {
+        sourceId: source.id,
+        targetId: target.id,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to initiate bandwidth sharing');
+      if (response.data) {
+        setSharingLines(prev => [...prev, {
+          source: [source.coordinates.latitude, source.coordinates.longitude],
+          target: [target.coordinates.latitude, target.coordinates.longitude],
+          id: `${source.id}-${target.id}`
+        }]);
       }
-
-      // Add sharing line
-      setSharingLines(prev => [...prev, {
-        source: [source.coordinates.latitude, source.coordinates.longitude],
-        target: [target.coordinates.latitude, target.coordinates.longitude],
-        id: `${source.id}-${target.id}`
-      }]);
-
     } catch (error) {
       console.error('Failed to initiate sharing:', error);
       alert('Failed to initiate bandwidth sharing. Please try again.');

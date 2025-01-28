@@ -19,6 +19,7 @@ import FacilityList from './FacilityList';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import api from '../../services/api';
 
 export default function NetworkDashboard() {
   const [selectedFacility, setSelectedFacility] = useState(null);
@@ -35,39 +36,25 @@ export default function NetworkDashboard() {
   useEffect(() => {
     const fetchClinics = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/network/kisumu/clinics`);
-        const text = await response.text();
+        const response = await api.get('/api/network/kisumu/clinics');
+        const data = response.data;
         
-        console.log('Raw response:', text);
+        // Transform the data to match expected format
+        const transformedData = data.map(clinic => ({
+          ...clinic,
+          coordinates: {
+            latitude: clinic.coordinates.lat,
+            longitude: clinic.coordinates.lng
+          },
+          networkStatus: clinic.network_status || 'offline',
+          terrainFactor: 0.8
+        }));
         
-        // Try to parse as JSON
-        let data;
-        try {
-          data = JSON.parse(text);
-          // Transform the data to match expected format
-          data = data.map(clinic => ({
-            ...clinic,
-            coordinates: {
-              latitude: clinic.coordinates.lat,
-              longitude: clinic.coordinates.lng
-            },
-            networkStatus: clinic.network_status || 'offline', // Default to offline if not set
-            terrainFactor: 0.8 // Default terrain factor if not provided
-          }));
-          console.log('Transformed clinics data:', data);
-        } catch (e) {
-          console.error('Failed to parse response as JSON:', text);
-          throw new Error(`Invalid JSON response: ${text}`);
-        }
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}, message: ${data.error || text}`);
-        }
-        setClinics(data);
+        console.log('Transformed clinics data:', transformedData);
+        setClinics(transformedData);
       } catch (err) {
         console.error('Failed to fetch clinics:', err);
         setError(err.message);
-        // Set empty clinics array on error to prevent undefined errors
         setClinics([]);
       }
     };

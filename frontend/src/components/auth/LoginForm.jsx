@@ -33,28 +33,27 @@ const LoginForm = () => {
     setIsLoading(true);
     
     try {
-      // First validate the form data
       await loginSchema.parseAsync(formData);
-      
-      console.log("==Response login send====")
-
-      // Make API call to login endpoint
       const response = await authService.login(formData);
       
-      console.log("==Response====", response)
-
-      // Store the token
-      localStorage.setItem('token', response.token);
+      console.log('Login response:', response);
       
-      // Redirect based on user role
-      if (response.role === 'admin') {
-        navigate('/network/dashboard');
-      } else if (response.role === 'doctor') {
-        navigate('/dashboard/doctor');
-      } else {
-        navigate('/dashboard');
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify({
+          role: response.role,
+          full_name: response.full_name
+        }));
+        
+        // Redirect based on user role
+        if (response.role === 'admin') {
+          navigate('/network/dashboard');
+        } else if (response.role === 'doctor') {
+          navigate('/dashboard/doctor');
+        } else {
+          navigate('/dashboard');
+        }
       }
-
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors = {};

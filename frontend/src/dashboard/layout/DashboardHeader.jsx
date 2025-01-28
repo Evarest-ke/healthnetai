@@ -1,39 +1,58 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, ChevronDown } from 'lucide-react';
 import Avatar from '../../components/ui/Avatar';
+import { authService } from '../../services/auth';
+import { useAuth } from '../../context/AuthContext';
 
 const DashboardHeader = ({ userType }) => {
-  // User data mapping based on userType
-  const getUserData = (type) => {
-    switch (type) {
-      case 'admin':
-        return {
-          name: 'Mike Otieno',
-          role: 'Network Administrator',
-          avatar: null // Add avatar URL when available
-        };
-      case 'doctor':
-        return {
-          name: 'Dr. Alfred Gitonga',
-          role: 'Doctor',
-          avatar: null // Add avatar URL when available
-        };
-      case 'patient':
-        return {
-          name: 'Mary Akinyi',
-          role: 'Patient',
-          avatar: null // Add avatar URL when available
-        };
-      default:
-        return {
-          name: 'User',
+  const [userData, setUserData] = useState({
+    name: 'Loading...',
+    role: 'Loading...',
+    avatar: null
+  });
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // First try to get from localStorage
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUserData({
+            name: parsedUser.full_name,
+            role: parsedUser.role.charAt(0).toUpperCase() + parsedUser.role.slice(1),
+            avatar: parsedUser.avatar
+          });
+          return;
+        }
+
+        // If not in localStorage, fetch from backend
+        const currentUser = await authService.getCurrentUser();
+        if (currentUser?.data) {
+          const userData = currentUser.data;
+          localStorage.setItem('user', JSON.stringify(userData));
+          setUserData({
+            name: userData.full_name,
+            role: userData.role.charAt(0).toUpperCase() + userData.role.slice(1),
+            avatar: userData.avatar
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        // On error, clear stored data and show guest state
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUserData({
+          name: 'Guest',
           role: 'Guest',
           avatar: null
-        };
-    }
-  };
+        });
+      }
+    };
 
-  const userData = getUserData(userType);
+    fetchUserData();
+  }, [userType]);
 
   return (
     <header className="bg-white shadow">
