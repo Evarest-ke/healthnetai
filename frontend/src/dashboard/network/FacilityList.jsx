@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 export default function FacilityList({ clinics, selectedFacility, onEmergencyShare }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sharingSource, setSharingSource] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Number of facilities per page
 
   const handleShareRequest = (targetId) => {
     if (sharingSource && targetId) {
@@ -37,6 +39,18 @@ export default function FacilityList({ clinics, selectedFacility, onEmergencySha
     clinic.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredFacilities.length / itemsPerPage);
+  const currentFacilities = filteredFacilities.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Search Bar */}
@@ -45,7 +59,10 @@ export default function FacilityList({ clinics, selectedFacility, onEmergencySha
           type="text"
           placeholder="Search facilities..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1); // Reset to first page on search
+          }}
           className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         />
         <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -53,7 +70,7 @@ export default function FacilityList({ clinics, selectedFacility, onEmergencySha
 
       {/* Facilities List */}
       <div className="space-y-3">
-        {filteredFacilities.map((clinic) => (
+        {currentFacilities.map((clinic) => (
           <motion.div
             key={clinic.id}
             className={`
@@ -88,6 +105,27 @@ export default function FacilityList({ clinics, selectedFacility, onEmergencySha
             </div>
           </motion.div>
         ))}
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center space-x-2">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full"
+        >
+          Previous
+        </button>
+        <span className="text-sm text-gray-500">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full"
+        >
+          Next
+        </button>
       </div>
 
       {filteredFacilities.length === 0 && (

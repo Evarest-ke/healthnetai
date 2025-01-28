@@ -32,6 +32,7 @@ export default function NetworkDashboard() {
     shared: 0,
     available: 100
   });
+  const [stats, setStats] = useState([]);
 
   useEffect(() => {
     const fetchClinics = async () => {
@@ -60,6 +61,20 @@ export default function NetworkDashboard() {
     };
 
     fetchClinics();
+  }, []);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await api.get('/api/network/stats');
+        setStats(response.data);
+      } catch (err) {
+        console.error('Failed to fetch stats:', err);
+        setError(err.message);
+      }
+    };
+
+    fetchStats();
   }, []);
 
   const handleEmergencyShare = async (sourceId, targetId) => {
@@ -101,7 +116,7 @@ export default function NetworkDashboard() {
     }
   };
   
-  const stats = [
+  const statsOverview = [
     { 
       title: 'Network Uptime', 
       value: isConnected ? '99.9%' : 'Offline', 

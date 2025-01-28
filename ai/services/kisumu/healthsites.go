@@ -5,5 +5,10 @@ import (
 )
 
 func (s *NetworkService) GetClinics() ([]models.Clinic, error) {
-	return KisumuClinics, nil
+	// Assuming s.healthsites is an instance of healthsites.Client
+	clinics, err := s.healthsites.GetKisumuFacilities()
+	if err != nil {
+		return nil, err
+	}
+	return clinics, nil
 }

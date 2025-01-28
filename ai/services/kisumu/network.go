@@ -13,36 +13,36 @@ import (
 	"github.com/Evarest-ke/healthnetai/services/terrain"
 )
 
-// KisumuClinics defines the target facilities
-var KisumuClinics = []models.Clinic{
-	{
-		ID:   "ahero-sub",
-		Name: "Ahero Sub-County Hospital",
-		Coordinates: models.GeoPoint{
-			Latitude:  -0.1833,
-			Longitude: 34.9167,
-		},
-		BedCount: 50,
-	},
-	{
-		ID:   "kombewa-dist",
-		Name: "Kombewa District Hospital",
-		Coordinates: models.GeoPoint{
-			Latitude:  -0.0964,
-			Longitude: 34.7286,
-		},
-		BedCount: 100,
-	},
-	{
-		ID:   "lumumba-hc",
-		Name: "Lumumba Health Centre",
-		Coordinates: models.GeoPoint{
-			Latitude:  -0.0915,
-			Longitude: 34.7689,
-		},
-		BedCount: 30,
-	},
-}
+// // KisumuClinics defines the target facilities
+// var KisumuClinics = []models.Clinic{
+// 	{
+// 		ID:   "ahero-sub",
+// 		Name: "Ahero Sub-County Hospital",
+// 		Coordinates: models.GeoPoint{
+// 			Latitude:  -0.1833,
+// 			Longitude: 34.9167,
+// 		},
+// 		BedCount: 50,
+// 	},
+// 	{
+// 		ID:   "kombewa-dist",
+// 		Name: "Kombewa District Hospital",
+// 		Coordinates: models.GeoPoint{
+// 			Latitude:  -0.0964,
+// 			Longitude: 34.7286,
+// 		},
+// 		BedCount: 100,
+// 	},
+// 	{
+// 		ID:   "lumumba-hc",
+// 		Name: "Lumumba Health Centre",
+// 		Coordinates: models.GeoPoint{
+// 			Latitude:  -0.0915,
+// 			Longitude: 34.7689,
+// 		},
+// 		BedCount: 30,
+// 	},
+// }
 
 const (
 	modeDev  = "dev"
@@ -74,10 +74,10 @@ func NewNetworkService(apiKey string) *NetworkService {
 		apiKey:      apiKey,
 	}
 
-	// Initialize with static data
-	for _, clinic := range KisumuClinics {
-		ns.clinics[clinic.ID] = clinic
-	}
+	// // Initialize with static data
+	// for _, clinic := range KisumuClinics {
+	// 	ns.clinics[clinic.ID] = clinic
+	// }
 
 	// Only start background refresh in prod mode
 	if mode == modeProd && apiKey != "" && apiKey != "test-key" {

@@ -3,6 +3,7 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -57,6 +58,13 @@ func main() {
 			return true // Allow all origins in development
 		},
 	}
+
+	// Set Gin to release mode to reduce logging
+	gin.SetMode(gin.ReleaseMode)
+
+	// Create a custom logger that discards output
+	gin.DefaultWriter = io.Discard
+	gin.DefaultErrorWriter = io.Discard
 
 	// Initialize Gin router
 	r := gin.Default()
@@ -161,6 +169,29 @@ func main() {
 						"disk_usage":   0,
 					})
 				}
+			})
+
+			// Initialize network stats analyzer
+			networkStatsAnalyzer, err := analyzer.NewNetworkStatsAnalyzer(apiKey)
+			if err != nil {
+				log.Fatal("Failed to initialize network stats analyzer:", err)
+			}
+
+			// Update the stats endpoint
+			network.GET("/stats", func(c *gin.Context) {
+				clinics, err := kisumuNetwork.GetClinics()
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+					return
+				}
+
+				stats, err := networkStatsAnalyzer.AnalyzeNetworkStats(metrics, clinics)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+					return
+				}
+
+				c.JSON(http.StatusOK, stats)
 			})
 
 			// Kisumu-specific endpoints

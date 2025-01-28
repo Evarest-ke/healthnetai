@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	baseURL = "https://healthsites.io/api/v2"
+	baseURL = "https://healthsites.io/api/v3"
 )
 
 type Client struct {
@@ -24,18 +24,29 @@ type Client struct {
 }
 
 type HealthSite struct {
-	Properties struct {
-		Name         string    `json:"name"`
-		FacilityType string    `json:"facility_type"`
-		LastUpdated  time.Time `json:"last_updated"`
-		Amenities    []string  `json:"amenities"`
-		BedCount     int       `json:"bed_count"`
-	} `json:"properties"`
-	Geometry struct {
+	Attributes struct {
+		Amenity            string  `json:"amenity"`
+		Healthcare         string  `json:"healthcare"`
+		Name               string  `json:"name"`
+		OperatorType       string  `json:"operator_type"`
+		OperationalStatus  string  `json:"operational_status"`
+		OpeningHours       string  `json:"opening_hours"`
+		Beds               string  `json:"beds"`
+		AddrCity           string  `json:"addr_city"`
+		ChangesetID        float64 `json:"changeset_id"`
+		ChangesetVersion   float64 `json:"changeset_version"`
+		ChangesetTimestamp string  `json:"changeset_timestamp"`
+		ChangesetUser      string  `json:"changeset_user"`
+		UUID               string  `json:"uuid"`
+	} `json:"attributes"`
+	Centroid struct {
+		Type        string    `json:"type"`
 		Coordinates []float64 `json:"coordinates"`
-	} `json:"geometry"`
+	} `json:"centroid"`
+	OSMID        int64   `json:"osm_id"`
+	OSMType      string  `json:"osm_type"`
+	Completeness float64 `json:"completeness"`
 }
-
 type HealthSitesResponse struct {
 	Features []HealthSite `json:"features"`
 }
@@ -111,7 +122,7 @@ func (c *Client) GetKisumuFacilities() ([]models.Clinic, error) {
 		}, nil
 	}
 
-	url := fmt.Sprintf("%s/facilities/facilities.json?api-key=%s&page=1&format=geojson&country=KE", baseURL, c.apiKey)
+	url := fmt.Sprintf("%s/facilities/?api-key=%s&page=1&country=Kenya", baseURL, c.apiKey)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -124,24 +135,34 @@ func (c *Client) GetKisumuFacilities() ([]models.Clinic, error) {
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
-	// Log response for debugging
-	log.Printf("API Response: %s", string(body))
-
 	// Check if response is an error message
 	if !json.Valid(body) || strings.HasPrefix(string(body), "{\"error\":") {
 		return nil, fmt.Errorf("API error: %s", string(body))
 	}
 
-	var response struct {
-		Features []struct {
-			Properties struct {
-				Name string `json:"name"`
-				ID   string `json:"id"`
-			} `json:"properties"`
-			Geometry struct {
-				Coordinates []float64 `json:"coordinates"`
-			} `json:"geometry"`
-		} `json:"features"`
+	var response []struct {
+		Attributes struct {
+			Amenity            string  `json:"amenity"`
+			Healthcare         string  `json:"healthcare"`
+			Name               string  `json:"name"`
+			OperatorType       string  `json:"operator_type"`
+			OperationalStatus  string  `json:"operational_status"`
+			OpeningHours       string  `json:"opening_hours"`
+			Beds               string  `json:"beds"`
+			AddrCity           string  `json:"addr_city"`
+			ChangesetID        float64 `json:"changeset_id"`
+			ChangesetVersion   float64 `json:"changeset_version"`
+			ChangesetTimestamp string  `json:"changeset_timestamp"`
+			ChangesetUser      string  `json:"changeset_user"`
+			UUID               string  `json:"uuid"`
+		} `json:"attributes"`
+		Centroid struct {
+			Type        string    `json:"type"`
+			Coordinates []float64 `json:"coordinates"`
+		} `json:"centroid"`
+		OSMID        int64   `json:"osm_id"`
+		OSMType      string  `json:"osm_type"`
+		Completeness float64 `json:"completeness"`
 	}
 
 	if err := json.Unmarshal(body, &response); err != nil {
@@ -149,20 +170,32 @@ func (c *Client) GetKisumuFacilities() ([]models.Clinic, error) {
 	}
 
 	clinics := make([]models.Clinic, 0)
-	for _, result := range response.Features {
+	for _, result := range response {
+		if len(result.Centroid.Coordinates) < 2 {
+			log.Printf("Skipping feature with insufficient coordinates: %+v", result)
+			continue
+		}
 		clinic := models.Clinic{
-			ID:   result.Properties.ID,
-			Name: result.Properties.Name,
+			ID:   result.Attributes.UUID,
+			Name: result.Attributes.Name,
 			Coordinates: models.GeoPoint{
-				Latitude:  result.Geometry.Coordinates[1],
-				Longitude: result.Geometry.Coordinates[0],
+				Latitude:  result.Centroid.Coordinates[1],
+				Longitude: result.Centroid.Coordinates[0],
 			},
-			NetworkStatus: c.getNetworkStatus(result.Properties.ID),
+			NetworkStatus: c.getNetworkStatus(result.Attributes.UUID),
 			LastOutage:    time.Time{},
 			EmergencyMode: false,
 		}
 		clinics = append(clinics, clinic)
 	}
 
+	// log.Printf("Retrieved %d clinics from Healthsites API:", len(clinics))
+	// for _, clinic := range clinics {
+	// 	log.Printf("- %s (%s) at %.4f, %.4f",
+	// 		clinic.Name,
+	// 		clinic.ID,
+	// 		clinic.Coordinates.Latitude,
+	// 		clinic.Coordinates.Longitude)
+	// }
 	return clinics, nil
 }
