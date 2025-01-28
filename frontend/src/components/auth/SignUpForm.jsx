@@ -10,6 +10,7 @@ import Button from '../ui/Button';
 import { emailSchema, passwordSchema, nameSchema, userTypeSchema } from '../../utils/validation';
 import { Link } from 'react-router-dom';
 import { authService } from '../../services/auth';
+import { toast } from 'react-hot-toast';
 
 const signUpSchema = z.object({
   fullName: nameSchema,
@@ -47,19 +48,11 @@ const SignUpForm = () => {
       // Send data to backend using auth service
       const response = await authService.signup(formData);
 
-      // Store token if returned
-      if (response.token) {
-        localStorage.setItem('token', response.token);
-        
-        // Redirect based on user type
-        const redirectPath = formData.userType === 'admin' 
-          ? '/network/dashboard'
-          : '/dashboard';
-        
-        navigate(redirectPath);
-      } else {
-        throw new Error('No token received from server');
-      }
+      // Show success message
+      toast.success('Account created successfully! Please login.');
+      
+      // Redirect to login page
+      navigate('/login');
 
     } catch (error) {
       if (error instanceof z.ZodError) {
