@@ -65,8 +65,9 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{
 		"https://healthnetai.vercel.app",
-		"http://localhost:5173", // For local development
-		"http://localhost:3000", // Alternative local port
+		"https://healthnetai-backend.onrender.com",
+		"http://localhost:5173",
+		"http://localhost:3000",
 	}
 	config.AllowHeaders = []string{
 		"Origin",
@@ -77,6 +78,8 @@ func main() {
 	}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
 	config.AllowCredentials = true
+	config.ExposeHeaders = []string{"Content-Length"}
+	config.MaxAge = 12 * time.Hour
 
 	r.Use(cors.New(config))
 
