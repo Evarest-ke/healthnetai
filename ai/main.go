@@ -61,13 +61,24 @@ func main() {
 	// Initialize Gin router
 	r := gin.Default()
 
-	// Add CORS middleware
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://healthnetai.vercel.app", "http://localhost:5173", "http://localhost:5174"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		AllowCredentials: true,
-	}))
+	// Configure CORS
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{
+		"https://healthnetai.vercel.app",
+		"http://localhost:5173", // For local development
+		"http://localhost:3000", // Alternative local port
+	}
+	config.AllowHeaders = []string{
+		"Origin",
+		"Content-Type",
+		"Accept",
+		"Authorization",
+		"X-Requested-With",
+	}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
+	config.AllowCredentials = true
+
+	r.Use(cors.New(config))
 
 	// Start metrics collection
 	metricsChan := networkCollector.Start()
