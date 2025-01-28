@@ -8,12 +8,26 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     const userData = await authService.login(credentials);
-    setUser(userData);
+    if (userData.token) {
+      localStorage.setItem('token', userData.token);
+      localStorage.setItem('user', JSON.stringify({
+        role: userData.role,
+        full_name: userData.full_name
+      }));
+      setUser(userData);
+    }
   };
 
   const logout = () => {
-    authService.logout();
+    // Clear user from state
     setUser(null);
+    
+    // Clear localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Call auth service logout
+    authService.logout();
   };
 
   return (

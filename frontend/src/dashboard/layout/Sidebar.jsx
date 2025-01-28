@@ -18,15 +18,23 @@ import {
   Building2,
   LogOut
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Sidebar({ userType }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    // Add any logout logic here (clear tokens, session, etc.)
-    localStorage.removeItem('authToken'); // Clear auth token
-    navigate('/'); // Redirect to homepage
+    // Call the logout function from AuthContext
+    logout();
+    
+    // Clear any additional storage items
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Redirect to home page
+    navigate('/');
   };
 
   const doctorNavigation = [

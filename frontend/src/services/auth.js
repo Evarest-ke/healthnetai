@@ -23,6 +23,7 @@ export const authService = {
         password: credentials.password
       });
       
+      console.log("Logging in",response.data)
       // Return the entire response data
       return response.data;
     } catch (error) {

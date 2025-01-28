@@ -34,6 +34,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import FeaturesPage from './pages/FeaturesPage';
+
+
 function App() {
   const [syncStatus, setSyncStatus] = React.useState('online');
   const [lastSync, setLastSync] = React.useState(new Date());
@@ -48,26 +50,8 @@ function App() {
         <Router>
           <ToastContainer />
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUpPage />} /> 
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            
-            <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-            <Route path="/doctor/appointments" element={<AppointmentsPage />} />
-            <Route path="/doctor/patients" element={<PatientsPage />} />
-            <Route path="/patient/dashboard" element={<PatientDashboard />} />
-            <Route path="/network/dashboard" element={<NetworkDashboard />} />
-            <Route path="/network/status" element={<NetworkStatus />} />
-            <Route path="/network/facilities" element={<Facilities />} />
-            <Route path="/network/maintenance" element={<MaintenancePage />} />
-            <Route path="/network/analytics" element={<NetworkAnalytics />} />
-            <Route path="/network/alerts" element={<NetworkAlerts />} />
-            <Route path="/network/settings" element={<NetworkSettings />} />
-            <Route path="/doctor/records" element={<MedicalRecordsPage />} />
-            <Route path="/doctor/analytics" element={<AnalyticsPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/features" element={<FeaturesPage />} />
+            {/* Public routes */}
+            {/* Landing page route */}
             <Route path="/" element={
               <main>
                 <Header />
@@ -79,15 +63,31 @@ function App() {
                 <Footer />
               </main>
             } />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/features" element={<FeaturesPage />} />
 
-            <Route
-              path="/dashboard/*"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            />
+            {/* Protected routes - require authentication */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<PatientDashboard />} />
+              <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+              <Route path="/doctor/appointments" element={<AppointmentsPage />} />
+              <Route path="/doctor/patients" element={<PatientsPage />} />
+              <Route path="/doctor/records" element={<MedicalRecordsPage />} />
+              <Route path="/doctor/analytics" element={<AnalyticsPage />} />
+              <Route path="/network/dashboard" element={<NetworkDashboard />} />
+              <Route path="/network/status" element={<NetworkStatus />} />
+              <Route path="/network/facilities" element={<Facilities />} />
+              <Route path="/network/maintenance" element={<MaintenancePage />} />
+              <Route path="/network/analytics" element={<NetworkAnalytics />} />
+              <Route path="/network/alerts" element={<NetworkAlerts />} />
+              <Route path="/network/settings" element={<NetworkSettings />} />
+            </Route>
+
+            
           </Routes>
           <SyncStatus status={syncStatus} lastSync={lastSync} />
         </Router>

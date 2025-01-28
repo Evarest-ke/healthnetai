@@ -7,6 +7,7 @@ import { emailSchema, passwordSchema } from '../../utils/validation';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { authService } from '../../services/auth';
+import { useAuth } from '../../context/AuthContext';
 
 const loginSchema = z.object({
   email: emailSchema,
@@ -14,6 +15,7 @@ const loginSchema = z.object({
 });
 
 const LoginForm = () => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -34,25 +36,18 @@ const LoginForm = () => {
     
     try {
       await loginSchema.parseAsync(formData);
-      const response = await authService.login(formData);
+      await login(formData);
       
-      console.log('Login response:', response);
+      // Get user data from localStorage after successful login
+      const userData = JSON.parse(localStorage.getItem('user'));
       
-      if (response.token) {
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('user', JSON.stringify({
-          role: response.role,
-          full_name: response.full_name
-        }));
-        
-        // Redirect based on user role
-        if (response.role === 'admin') {
-          navigate('/network/dashboard');
-        } else if (response.role === 'doctor') {
-          navigate('/dashboard/doctor');
-        } else {
-          navigate('/dashboard');
-        }
+      // Redirect based on user role
+      if (userData.role === 'admin') {
+        navigate('/network/dashboard');
+      } else if (userData.role === 'doctor') {
+        navigate('/dashboard/doctor');
+      } else {
+        navigate('/dashboard');
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
