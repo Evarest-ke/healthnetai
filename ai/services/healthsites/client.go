@@ -7,7 +7,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -110,6 +109,10 @@ func (c *Client) getNetworkStatus(facilityID string) string {
 	return condition.status
 }
 
+type APIErrorResponse struct {
+	Detail string `json:"detail"`
+}
+
 // GetKisumuFacilities retrieves healthcare facilities in Kisumu County
 func (c *Client) GetKisumuFacilities() ([]models.Clinic, error) {
 	// If no database in production, skip cache attempt
@@ -200,38 +203,51 @@ func (c *Client) GetKisumuFacilities() ([]models.Clinic, error) {
 
 	url := fmt.Sprintf("%s/facilities/?api-key=%s&page=1&country=Kenya", baseURL, c.apiKey)
 
-	log.Println("Not found in the database using apu")
+	log.Println("Not found in the database using api")
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get facilities: %w", err)
+		log.Printf("API request failed: %v, using mock data", err)
+		return mockClinics, nil
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response: %w", err)
+		log.Printf("Failed to read response: %v, using mock data", err)
+		return mockClinics, nil
 	}
 
-	// Check if response is an error message
-	if !json.Valid(body) || strings.HasPrefix(string(body), "{\"error\":") {
-		return nil, fmt.Errorf("API error: %s", string(body))
+	log.Println("raw response", string(body))
+
+	// First try to parse as error response
+	var errorResp APIErrorResponse
+	if err := json.Unmarshal(body, &errorResp); err == nil && errorResp.Detail != "" {
+		log.Printf("API limit reached: %s, using mock data", errorResp.Detail)
+		return mockClinics, nil
 	}
 
-	// Directly unmarshal into array of HealthSite
-	var healthSites []HealthSite
-	if err := json.Unmarshal(body, &healthSites); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+	// If not an error, try to parse as normal response
+	var response HealthSitesResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		log.Printf("Failed to decode response: %v, using mock data", err)
+		return mockClinics, nil
+	}
+
+	// If we got no features, use mock data
+	if len(response.Features) == 0 {
+		log.Printf("No facilities found in API response, using mock data")
+		return mockClinics, nil
 	}
 
 	// Cache the healthSites data before converting to clinics
-	err = c.db.UpsertHealthSite(healthSites)
+	err = c.db.UpsertHealthSite(response.Features)
 	if err != nil {
 		// Log the error but don't fail the request
 		fmt.Printf("Failed to cache health sites: %v\n", err)
 	}
 
 	clinics := make([]models.Clinic, 0)
-	for _, site := range healthSites {
+	for _, site := range response.Features {
 		if len(site.Centroid.Coordinates) < 2 {
 			log.Printf("Skipping site with insufficient coordinates: %+v", site)
 			continue

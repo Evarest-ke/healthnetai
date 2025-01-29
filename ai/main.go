@@ -29,6 +29,12 @@ func main() {
 		log.Fatal("Error loading .env file:", err)
 	}
 
+	// err = healthsites.MigrateFromSQLiteToPostgres()
+	// if err != nil {
+	// 	log.Fatalf("Migration failed: %v", err)
+	// }
+	// log.Println("Migration completed successfully")
+
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" {
 		log.Fatal("GEMINI_API_KEY environment variable not set")

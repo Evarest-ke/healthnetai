@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	_ "github.com/lib/pq"
 )
@@ -35,9 +34,15 @@ type DBStore struct {
 }
 
 func NewDBStore() (*DBStore, error) {
-	db, err := sql.Open("sqlite3", "./backend/database/clinicStore.db")
+	connStr := "postgresql://neondb_owner:npg_gY5v8GrzThda@ep-flat-smoke-a8pxa57g-pooler.eastus2.azure.neon.tech/neondb?sslmode=require"
+	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("failed to connect to database: %v", err)
+	}
+
+	// Test the connection
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
 
 	// Create table if it doesn't exist
