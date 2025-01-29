@@ -112,33 +112,37 @@ func (c *Client) getNetworkStatus(facilityID string) string {
 
 // GetKisumuFacilities retrieves healthcare facilities in Kisumu County
 func (c *Client) GetKisumuFacilities() ([]models.Clinic, error) {
-	// Try to get from cache first
-	log.Println("Fetching from the databse")
-	facilities, err := c.db.GetHealthSite()
-	if err == nil && facilities != nil {
-		log.Println("using data in the database")
-		// Convert cached HealthSite data to Clinic models
-		clinics := make([]models.Clinic, 0)
-		for _, site := range facilities {
-			if len(site.Centroid.Coordinates) < 2 {
-				continue
+	// If no database in production, skip cache attempt
+	if c.db != nil {
+		// Try to get from cache first
+		log.Println("Fetching from the database")
+		facilities, err := c.db.GetHealthSite()
+		if err == nil && facilities != nil {
+			log.Println("using data in the database")
+			// Convert cached HealthSite data to Clinic models
+			clinics := make([]models.Clinic, 0)
+			for _, site := range facilities {
+				if len(site.Centroid.Coordinates) < 2 {
+					continue
+				}
+				clinic := models.Clinic{
+					ID:   site.Attributes.UUID,
+					Name: site.Attributes.Name,
+					Coordinates: models.GeoPoint{
+						Latitude:  site.Centroid.Coordinates[1],
+						Longitude: site.Centroid.Coordinates[0],
+					},
+					NetworkStatus: c.getNetworkStatus(site.Attributes.UUID),
+					LastOutage:    time.Time{},
+					EmergencyMode: false,
+				}
+				clinics = append(clinics, clinic)
 			}
-			clinic := models.Clinic{
-				ID:   site.Attributes.UUID,
-				Name: site.Attributes.Name,
-				Coordinates: models.GeoPoint{
-					Latitude:  site.Centroid.Coordinates[1],
-					Longitude: site.Centroid.Coordinates[0],
-				},
-				NetworkStatus: c.getNetworkStatus(site.Attributes.UUID),
-				LastOutage:    time.Time{},
-				EmergencyMode: false,
+			if len(clinics) > 0 {
+				return clinics, nil
 			}
-			clinics = append(clinics, clinic)
 		}
-		if len(clinics) > 0 {
-			return clinics, nil
-		}
+
 	}
 
 	// Mock data to return when no facilities are found or using test key
