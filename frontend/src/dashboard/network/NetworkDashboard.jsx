@@ -21,6 +21,14 @@ import { useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import api from '../../services/api';
 
+// Create an icon mapping object
+const iconMapping = {
+  'Signal': Signal,
+  'Server': Server,
+  'Share2': Share2,
+  'Activity': Activity
+};
+
 export default function NetworkDashboard() {
   const [selectedFacility, setSelectedFacility] = useState(null);
   const { metrics, isConnected } = useWebSocket();
@@ -147,6 +155,12 @@ export default function NetworkDashboard() {
     }
   ];
 
+  // Function to get the icon component
+  const getIconComponent = (iconName) => {
+    const IconComponent = iconMapping[iconName];
+    return IconComponent || null;
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar userType="admin" />
@@ -180,30 +194,34 @@ export default function NetworkDashboard() {
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              {stats.map((stat, index) => (
-                <motion.div 
-                  key={`stat-${index}`}
-                  className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <div className="flex items-center">
-                    <stat.icon className="h-8 w-8 text-indigo-600" />
-                    <div className="ml-4">
-                      <p className="text-sm text-gray-500">{stat.title}</p>
-                      <p className="text-2xl font-semibold">{stat.value}</p>
-                      <span className={`text-sm ${
-                        stat.trend === 'up' ? 'text-green-500' : 
-                        stat.trend === 'down' ? 'text-red-500' : 
-                        'text-gray-500'
-                      }`}>
-                        {stat.change}
-                      </span>
+              {stats.map((stat, index) => {
+                const IconComponent = getIconComponent(stat.icon);
+                
+                return (
+                  <motion.div 
+                    key={`stat-${index}`}
+                    className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <div className="flex items-center">
+                      {IconComponent && <IconComponent className="h-8 w-8 text-indigo-600" />}
+                      <div className="ml-4">
+                        <p className="text-sm text-gray-500">{stat.title}</p>
+                        <p className="text-2xl font-semibold">{stat.value}</p>
+                        <span className={`text-sm ${
+                          stat.trend === 'up' ? 'text-green-500' : 
+                          stat.trend === 'down' ? 'text-red-500' : 
+                          'text-gray-500'
+                        }`}>
+                          {stat.change}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
 
             {/* Main Content Grid */}

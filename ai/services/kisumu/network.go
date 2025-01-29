@@ -66,9 +66,15 @@ func NewNetworkService(apiKey string) *NetworkService {
 		mode = modeDev
 	}
 
+	healthsitesClient, err := healthsites.NewClient(apiKey)
+	if err != nil {
+		log.Printf("Failed to initialize healthsites client: %v", err)
+		healthsitesClient = nil
+	}
+
 	ns := &NetworkService{
 		clinics:     make(map[string]models.Clinic),
-		healthsites: healthsites.NewClient(apiKey),
+		healthsites: healthsitesClient,
 		terrain:     terrain.NewTerrainService(),
 		mode:        mode,
 		apiKey:      apiKey,

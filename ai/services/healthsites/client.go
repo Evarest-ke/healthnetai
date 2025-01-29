@@ -21,6 +21,8 @@ const (
 type Client struct {
 	httpClient *http.Client
 	apiKey     string
+	baseURL    string
+	db         *DBStore
 }
 
 type HealthSite struct {
@@ -66,13 +68,20 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func NewClient(apiKey string) *Client {
+func NewClient(apiKey string) (*Client, error) {
+	store, err := NewDBStore()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Client{
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
-		apiKey: apiKey,
-	}
+		baseURL: baseURL,
+		db:      store,
+		apiKey:  apiKey,
+	}, nil
 }
 
 func (c *Client) getNetworkStatus(facilityID string) string {
@@ -103,6 +112,35 @@ func (c *Client) getNetworkStatus(facilityID string) string {
 
 // GetKisumuFacilities retrieves healthcare facilities in Kisumu County
 func (c *Client) GetKisumuFacilities() ([]models.Clinic, error) {
+	// Try to get from cache first
+	log.Println("Fetching from the databse")
+	facilities, err := c.db.GetHealthSite()
+	if err == nil && facilities != nil {
+		log.Println("using data in the database")
+		// Convert cached HealthSite data to Clinic models
+		clinics := make([]models.Clinic, 0)
+		for _, site := range facilities {
+			if len(site.Centroid.Coordinates) < 2 {
+				continue
+			}
+			clinic := models.Clinic{
+				ID:   site.Attributes.UUID,
+				Name: site.Attributes.Name,
+				Coordinates: models.GeoPoint{
+					Latitude:  site.Centroid.Coordinates[1],
+					Longitude: site.Centroid.Coordinates[0],
+				},
+				NetworkStatus: c.getNetworkStatus(site.Attributes.UUID),
+				LastOutage:    time.Time{},
+				EmergencyMode: false,
+			}
+			clinics = append(clinics, clinic)
+		}
+		if len(clinics) > 0 {
+			return clinics, nil
+		}
+	}
+
 	// Mock data to return when no facilities are found or using test key
 	mockClinics := []models.Clinic{
 		{
@@ -158,6 +196,7 @@ func (c *Client) GetKisumuFacilities() ([]models.Clinic, error) {
 
 	url := fmt.Sprintf("%s/facilities/?api-key=%s&page=1&country=Kenya", baseURL, c.apiKey)
 
+	log.Println("Not found in the database using apu")
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get facilities: %w", err)
@@ -169,34 +208,22 @@ func (c *Client) GetKisumuFacilities() ([]models.Clinic, error) {
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
-	// Print the raw response for debugging
-	// log.Printf("Raw API response: %s", string(body))
-
 	// Check if response is an error message
 	if !json.Valid(body) || strings.HasPrefix(string(body), "{\"error\":") {
 		return nil, fmt.Errorf("API error: %s", string(body))
 	}
 
-	// First, unmarshal into a map to inspect the structure
-	var rawResponse map[string]interface{}
-	if err := json.Unmarshal(body, &rawResponse); err != nil {
-		return nil, fmt.Errorf("failed to decode raw response: %w", err)
-	}
-
-	// Convert the response to JSON bytes
-	facilitiesJSON, err := json.Marshal(rawResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal facilities: %w", err)
-	}
-
+	// Directly unmarshal into array of HealthSite
 	var healthSites []HealthSite
-	if err := json.Unmarshal(facilitiesJSON, &healthSites); err != nil {
-		// Try unmarshaling as a single object
-		var singleSite HealthSite
-		if err := json.Unmarshal(facilitiesJSON, &singleSite); err != nil {
-			return nil, fmt.Errorf("failed to decode response as array or single object: %w", err)
-		}
-		healthSites = []HealthSite{singleSite}
+	if err := json.Unmarshal(body, &healthSites); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Cache the healthSites data before converting to clinics
+	err = c.db.UpsertHealthSite(healthSites)
+	if err != nil {
+		// Log the error but don't fail the request
+		fmt.Printf("Failed to cache health sites: %v\n", err)
 	}
 
 	clinics := make([]models.Clinic, 0)
