@@ -8,11 +8,7 @@ export const emailSchema = z
 export const passwordSchema = z
   .string()
   .min(1, 'Password is required')
-  .min(8, 'Password must be at least 8 characters long')
-  .regex(
-    /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&#-_]{8,}$/,
-    'Password must contain at least one letter and one number'
-  );
+  .length(8, 'Password must be exactly 8 characters long');
 
 export const nameSchema = z
   .string()
