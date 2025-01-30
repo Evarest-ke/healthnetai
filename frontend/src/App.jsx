@@ -34,6 +34,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import FeaturesPage from './pages/FeaturesPage';
+import ProfilePage from './dashboard/profile/ProfilePage';
 
 
 function App() {
@@ -87,6 +88,8 @@ function App() {
               <Route path="/network/settings" element={<NetworkSettings />} />
             </Route>
 
+            {/* Shared Routes */}
+            <Route path="/profile" element={<ProfilePage />} /> 
             
           </Routes>
           <SyncStatus status={syncStatus} lastSync={lastSync} />
