@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, ChevronDown } from 'lucide-react';
-import Avatar from '../../components/ui/Avatar';
+import { Bell } from 'lucide-react';
 import { authService } from '../../services/auth';
 import { useAuth } from '../../context/AuthContext';
+import UserDropdown from './UserDropdown';
 
 const DashboardHeader = ({ userType }) => {
   const [userData, setUserData] = useState({
     name: 'Loading...',
     role: 'Loading...',
+    email: 'loading@example.com',
     avatar: null
   });
   const { user } = useAuth();
@@ -22,6 +23,7 @@ const DashboardHeader = ({ userType }) => {
           setUserData({
             name: parsedUser.full_name,
             role: parsedUser.role.charAt(0).toUpperCase() + parsedUser.role.slice(1),
+            email: parsedUser.email,
             avatar: parsedUser.avatar
           });
           return;
@@ -35,6 +37,7 @@ const DashboardHeader = ({ userType }) => {
           setUserData({
             name: userData.full_name,
             role: userData.role.charAt(0).toUpperCase() + userData.role.slice(1),
+            email: userData.email,
             avatar: userData.avatar
           });
         }
@@ -46,6 +49,7 @@ const DashboardHeader = ({ userType }) => {
         setUserData({
           name: 'Guest',
           role: 'Guest',
+          email: 'guest@example.com',
           avatar: null
         });
       }
@@ -66,18 +70,7 @@ const DashboardHeader = ({ userType }) => {
             <Bell className="h-6 w-6" />
           </button>
           
-          <div className="flex items-center space-x-3">
-            <Avatar 
-              src={userData.avatar}
-              alt={userData.name}
-              size="sm"
-            />
-            <div className="text-sm">
-              <p className="font-medium text-gray-900">{userData.name}</p>
-              <p className="text-gray-500">{userData.role}</p>
-            </div>
-            <ChevronDown className="h-4 w-4 text-gray-500" />
-          </div>
+          <UserDropdown userData={userData} />
         </div>
       </div>
     </header>

@@ -8,7 +8,8 @@ export const emailSchema = z
 export const passwordSchema = z
   .string()
   .min(1, 'Password is required')
-  .length(8, 'Password must be exactly 8 characters long');
+  .min(8, 'Password must be at least 8 characters long')
+  .max(20, 'Password must not exceed 20 characters');
 
 export const nameSchema = z
   .string()
