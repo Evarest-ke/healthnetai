@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -48,10 +49,11 @@ func Signup(c *gin.Context) {
 	}
 
 	result, err := database.DB.Exec(
-		"INSERT INTO users (email, password_hash, full_name, role) VALUES (?, ?, ?, ?)",
+		"INSERT INTO users (email, password_hash, full_name, role) VALUES ($1, $2, $3, $4)",
 		req.Email, string(hashedPassword), req.FullName, req.Role,
 	)
 	if err != nil {
+		log.Println("==============Failed to create user=====================", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
@@ -67,6 +69,7 @@ func Signup(c *gin.Context) {
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
+		log.Println("==============Failed to generate token=====================", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
@@ -82,6 +85,7 @@ func Signup(c *gin.Context) {
 func Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Println("==============Failed to bind json=====================", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -96,7 +100,7 @@ func Login(c *gin.Context) {
 
 	var passwordHash string
 	err := database.DB.QueryRow(
-		"SELECT id, full_name, email, role, password_hash FROM users WHERE email = ?",
+		"SELECT id, full_name, email, role, password_hash FROM users WHERE email = $1",
 		req.Email,
 	).Scan(&userData.ID, &userData.FullName, &userData.Email, &userData.Role, &passwordHash)
 	if err != nil {
@@ -145,7 +149,7 @@ func GetCurrentUser(c *gin.Context) {
 	err := database.DB.QueryRow(`
 		SELECT id, full_name, email, role, last_login 
 		FROM users 
-		WHERE id = ?`,
+		WHERE id = $1`,
 		userID,
 	).Scan(&user.ID, &user.FullName, &user.Email, &user.Role, &user.LastLogin)
 	if err != nil {

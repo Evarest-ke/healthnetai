@@ -217,7 +217,7 @@ func (c *Client) GetKisumuFacilities() ([]models.Clinic, error) {
 		return mockClinics, nil
 	}
 
-	log.Println("raw response", string(body))
+	// log.Println("raw response", string(body))
 
 	// First try to parse as error response
 	var errorResp APIErrorResponse
@@ -226,28 +226,33 @@ func (c *Client) GetKisumuFacilities() ([]models.Clinic, error) {
 		return mockClinics, nil
 	}
 
-	// If not an error, try to parse as normal response
-	var response HealthSitesResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		log.Printf("Failed to decode response: %v, using mock data", err)
-		return mockClinics, nil
+	// Try to parse as direct array first
+	var directResponse []HealthSite
+	if err := json.Unmarshal(body, &directResponse); err != nil {
+		// If direct array fails, try parsing as wrapped response
+		var wrappedResponse HealthSitesResponse
+		if err := json.Unmarshal(body, &wrappedResponse); err != nil {
+			log.Printf("Failed to decode response: %v, using mock data", err)
+			return mockClinics, nil
+		}
+		directResponse = wrappedResponse.Features
 	}
 
 	// If we got no features, use mock data
-	if len(response.Features) == 0 {
+	if len(directResponse) == 0 {
 		log.Printf("No facilities found in API response, using mock data")
 		return mockClinics, nil
 	}
 
 	// Cache the healthSites data before converting to clinics
-	err = c.db.UpsertHealthSite(response.Features)
-	if err != nil {
-		// Log the error but don't fail the request
-		fmt.Printf("Failed to cache health sites: %v\n", err)
-	}
+	// err = c.db.UpsertHealthSite(directResponse)
+	// if err != nil {
+	// 	// Log the error but don't fail the request
+	// 	fmt.Printf("Failed to cache health sites: %v\n", err)
+	// }
 
 	clinics := make([]models.Clinic, 0)
-	for _, site := range response.Features {
+	for _, site := range directResponse {
 		if len(site.Centroid.Coordinates) < 2 {
 			log.Printf("Skipping site with insufficient coordinates: %+v", site)
 			continue

@@ -11,7 +11,8 @@ var DB *sql.DB
 
 func InitDB(dbPath string) {
 	var err error
-	DB, err = sql.Open("sqlite3", dbPath)
+	connStr := "postgresql://neondb_owner:npg_gY5v8GrzThda@ep-flat-smoke-a8pxa57g-pooler.eastus2.azure.neon.tech/neondb?sslmode=require"
+	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,7 +27,7 @@ func InitDB(dbPath string) {
 func createTables() {
 	createUsersTable := `
     CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         full_name TEXT NOT NULL,

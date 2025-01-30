@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 
 	_ "github.com/lib/pq"
 )
@@ -37,16 +38,19 @@ func NewDBStore() (*DBStore, error) {
 	connStr := "postgresql://neondb_owner:npg_gY5v8GrzThda@ep-flat-smoke-a8pxa57g-pooler.eastus2.azure.neon.tech/neondb?sslmode=require"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
+		log.Println("==============Failed to connect to database=====================", err)
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
 
 	// Test the connection
 	if err := db.Ping(); err != nil {
+		log.Println("==============Failed to ping database=====================", err)
 		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
 
 	// Create table if it doesn't exist
 	if _, err := db.Exec(createTableSQL); err != nil {
+		log.Println("==============Failed to create table=====================", err)
 		return nil, fmt.Errorf("failed to create table: %v", err)
 	}
 
@@ -57,6 +61,7 @@ func (s *DBStore) UpsertHealthSite(sites []HealthSite) error {
 	// Begin transaction
 	tx, err := s.db.Begin()
 	if err != nil {
+		log.Println("==============Failed to begin transaction=====================", err)
 		return fmt.Errorf("failed to begin transaction: %v", err)
 	}
 	defer tx.Rollback()
@@ -142,6 +147,7 @@ func (s *DBStore) GetHealthSite() ([]HealthSite, error) {
 
 	rows, err := s.db.Query(query)
 	if err != nil {
+		log.Println("==============Failed to query healthsites=====================", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -177,6 +183,7 @@ func (s *DBStore) GetHealthSite() ([]HealthSite, error) {
 		site.Centroid.Type = "Point"
 		err = json.Unmarshal(coordsJSON, &site.Centroid.Coordinates)
 		if err != nil {
+			log.Println("==============Failed to unmarshal coordinates=====================", err)
 			return nil, fmt.Errorf("failed to unmarshal coordinates: %v", err)
 		}
 
@@ -184,6 +191,7 @@ func (s *DBStore) GetHealthSite() ([]HealthSite, error) {
 	}
 
 	if err = rows.Err(); err != nil {
+		log.Println("==============Failed to get healthsites=====================", err)
 		return nil, err
 	}
 
