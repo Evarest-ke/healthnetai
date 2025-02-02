@@ -12,6 +12,7 @@ const Header = () => {
     { name: 'Features', href: '/features' },
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
+    { name: 'Help Center', href: '/help' },
   ];
 
   return (
@@ -69,6 +70,7 @@ const Header = () => {
               <a href="/features" className="text-gray-600 hover:text-blue-600">Features</a>
               <a href="/about" className="text-gray-600 hover:text-blue-600">About</a>
               <a href="/contact" className="text-gray-600 hover:text-blue-600">Contact</a>
+              <a href="/help" className="text-gray-600 hover:text-blue-600">Help Center</a>
               <Button 
                 variant="secondary" 
                 className="w-full"

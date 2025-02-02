@@ -35,6 +35,8 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import FeaturesPage from './pages/FeaturesPage';
 import ProfilePage from './dashboard/profile/ProfilePage';
+import HelpCenter from './pages/HelpCenter';
+import FloatingHelpButton from './components/common/FloatingHelpButton';
 
 
 function App() {
@@ -70,6 +72,7 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/help" element={<HelpCenter />} />
 
             {/* Protected routes - require authentication */}
             <Route element={<ProtectedRoute />}>
@@ -93,6 +96,7 @@ function App() {
             
           </Routes>
           <SyncStatus status={syncStatus} lastSync={lastSync} />
+          <FloatingHelpButton />
         </Router>
       </AuthProvider>
     </ErrorBoundary>
