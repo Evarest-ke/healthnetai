@@ -269,13 +269,13 @@ const HelpCenter = () => {
             <FaTimes className="w-5 h-5" />
           </button>
         </div>
-        <div className="relative pb-[56.25%]">
+{/*         <div className="relative pb-[56.25%]">
           <iframe
             src={video.videoUrl || "#"}
             className="absolute inset-0 w-full h-full"
             allowFullScreen
           />
-        </div>
+        </div> */}
         <div className="p-6">
           <h4 className="font-semibold mb-2">Topics Covered:</h4>
           <ul className="space-y-2">
