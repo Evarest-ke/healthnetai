@@ -271,7 +271,7 @@ const HelpCenter = () => {
         </div>
         <div className="relative pb-[56.25%]">
           <iframe
-            src={video.videoUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ"}
+            src={video.videoUrl || "#https://www.youtube.com/embed/dQw4w9WgXcQ"}
             className="absolute inset-0 w-full h-full"
             allowFullScreen
           />
